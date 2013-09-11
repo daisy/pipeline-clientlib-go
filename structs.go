@@ -101,9 +101,9 @@ type Job struct {
 	XMLName  xml.Name `xml:"http://www.daisy.org/ns/pipeline/data job"`
 	Nicename string   `xml:"http://www.daisy.org/ns/pipeline/data nicename"`
 	Script   `xml:"http://www.daisy.org/ns/pipeline/data script"`
-	Messages `xml:"http://www.daisy.org/ns/pipeline/data messages"`
-	Log      string `xml:"http://www.daisy.org/ns/pipeline/data log"`
-	Results  `xml:"http://www.daisy.org/ns/pipeline/data results"`
+	Messages Messages `xml:"http://www.daisy.org/ns/pipeline/data messages"`
+	Log      Log `xml:"http://www.daisy.org/ns/pipeline/data log"`
+	Results  Results `xml:"http://www.daisy.org/ns/pipeline/data results"`
 	Status   string `xml:"status,attr"`
 	Href     string `xml:"href,attr"`
 	Id       string `xml:"id,attr"`
