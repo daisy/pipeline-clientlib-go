@@ -1,7 +1,9 @@
 package pipeline
+
 import (
 	"encoding/xml"
 )
+
 //Error with information from the server
 type Error struct {
 	XMLName     xml.Name `xml:"http://www.daisy.org/ns/pipeline/data error"`
@@ -9,6 +11,7 @@ type Error struct {
 	Trace       string   `xml:"http://www.daisy.org/ns/pipeline/data error>trace"`
 	Query       string   `xml:"query,attr"`
 }
+
 //More info TODO link to wiki
 //Alive struct defined from the xmls
 //TODO link to wiki
@@ -18,7 +21,6 @@ type Alive struct {
 	Mode           string   `xml:"mode,attr"`           //Mode of execution
 	Version        string   `xml:"version,attr"`        //Version of the pipeline framework
 }
-
 
 //TODO link to wiki
 type Scripts struct {
@@ -31,39 +33,38 @@ type Scripts struct {
 //Script struct
 type Script struct {
 	XMLName  xml.Name `xml:"http://www.daisy.org/ns/pipeline/data script"`
-	Nicename string   `xml:"http://www.daisy.org/ns/pipeline/data nicename,ignoreempty"`
+	Nicename string   `xml:"http://www.daisy.org/ns/pipeline/data nicename,omitempty"`
 
-	Description string `xml:"http://www.daisy.org/ns/pipeline/data description,ignoreempty"`
+	Description string `xml:"http://www.daisy.org/ns/pipeline/data description,omitempty"`
 
-	Homepage string   `xml:"http://www.daisy.org/ns/pipeline/data homepage,ignoreempty"`
-	Inputs   []Input  `xml:"http://www.daisy.org/ns/pipeline/data input,ignoreempty"`
-	Options  []Option `xml:"http://www.daisy.org/ns/pipeline/data option,ignoreempty"`
+	Homepage string   `xml:"http://www.daisy.org/ns/pipeline/data homepage,omitempty"`
+	Inputs   []Input  `xml:"http://www.daisy.org/ns/pipeline/data input,omitempty"`
+	Options  []Option `xml:"http://www.daisy.org/ns/pipeline/data option,omitempty"`
 	Href     string   `xml:"href,attr"`
-	Id       string   `xml:"id,attr,ignoreempty"`
+	Id       string   `xml:"id,attr,omitempty"`
 }
 
 type Option struct {
 	XMLName    xml.Name `xml:"http://www.daisy.org/ns/pipeline/data option"`
-	Required   bool     `xml:"required,attr,ignoreempty"`
-	Sequence   bool     `xml:"sequence,attr,ignoreempty"`
-	Name       string   `xml:"name,attr,ignoreempty"`
-	Ordered    bool     `xml:"ordered,attr,ignoreempty"`
-	Mediatype  string   `xml:"mediaType,attr,ignoreempty"`
-	Desc       string   `xml:"desc,attr,ignoreempty"`
-	Type       string   `xml:"type,attr,ignoreempty"`
-	OutputType string   `xml:"optionType,attr,ignoreempty"`
-        Separator  string   `xml:"separator,attr,ignoreempty"`
-	Value      string   `xml:",chardata,ignoreempty"`
+	Required   bool     `xml:"required,attr,omitempty"`
+	Sequence   bool     `xml:"sequence,attr,omitempty"`
+	Name       string   `xml:"name,attr,omitempty"`
+	Ordered    bool     `xml:"ordered,attr,omitempty"`
+	Mediatype  string   `xml:"mediaType,attr,omitempty"`
+	Desc       string   `xml:"desc,attr,omitempty"`
+	Type       string   `xml:"type,attr,omitempty"`
+	OutputType string   `xml:"optionType,attr,omitempty"`
+	Separator  string   `xml:"separator,attr,omitempty"`
+	Value      string   `xml:",chardata"`
 	Items      []Item
-
 }
 type Input struct {
 	XMLName   xml.Name `xml:"http://www.daisy.org/ns/pipeline/data input"`
-	Desc      string   `xml:"desc,attr,ignoreempty"`
-	Mediatype string   `xml:"mediaType,attr,ignoreempty"`
+	Desc      string   `xml:"desc,attr,omitempty"`
+	Mediatype string   `xml:"mediaType,attr,omitempty"`
 	Name      string   `xml:"name,attr"`
-	Sequence  bool     `xml:"sequence,attr,ignoreempty"`
-	Items      []Item
+	Sequence  bool     `xml:"sequence,attr,omitempty"`
+	Items     []Item
 }
 
 type Item struct {
@@ -79,9 +80,45 @@ type Callback struct {
 }
 
 type JobRequest struct {
-	XMLName  xml.Name `xml:"http://www.daisy.org/ns/pipeline/data jobRequest"`
-	Script Script `xml:"http://www.daisy.org/ns/pipeline/data script,ignoreempty"`
-	Inputs []Input    `xml:"http://www.daisy.org/ns/pipeline/data input,ignoreempty"`
-	Options   []Option   `xml:"http://www.daisy.org/ns/pipeline/data option,ignoreempty"`
-	Callback []Callback `xml:"http://www.daisy.org/ns/pipeline/data callback,ignoreempty"`
+	XMLName  xml.Name   `xml:"http://www.daisy.org/ns/pipeline/data jobRequest"`
+	Script   Script     `xml:"http://www.daisy.org/ns/pipeline/data script,omitempty"`
+	Inputs   []Input    `xml:"http://www.daisy.org/ns/pipeline/data input,omitempty"`
+	Options  []Option   `xml:"http://www.daisy.org/ns/pipeline/data option,omitempty"`
+	Callback []Callback `xml:"http://www.daisy.org/ns/pipeline/data callback,omitempty"`
+}
+
+type Messages struct {
+	XMLName xml.Name `xml:"http://www.daisy.org/ns/pipeline/data messages"`
+	Message `xml:"http://www.daisy.org/ns/pipeline/data message"`
+}
+type Results struct {
+	XMLName  xml.Name `xml:"http://www.daisy.org/ns/pipeline/data results"`
+	Result   []Result `xml:"http://www.daisy.org/ns/pipeline/data result"`
+	Href     string   `xml:"href,attr"`
+	MimeType string   `xml:"mime-type,attr"`
+}
+type Job struct {
+	XMLName  xml.Name `xml:"http://www.daisy.org/ns/pipeline/data job"`
+	Nicename string   `xml:"http://www.daisy.org/ns/pipeline/data nicename"`
+	Script   `xml:"http://www.daisy.org/ns/pipeline/data script"`
+	Messages `xml:"http://www.daisy.org/ns/pipeline/data messages"`
+	Log      string `xml:"http://www.daisy.org/ns/pipeline/data log"`
+	Results  `xml:"http://www.daisy.org/ns/pipeline/data results"`
+	Status   string `xml:"status,attr"`
+	Href     string `xml:"href,attr"`
+	Id       string `xml:"id,attr"`
+}
+type Result struct {
+	XMLName  xml.Name `xml:"http://www.daisy.org/ns/pipeline/data result"`
+	MimeType string   `xml:"mime-type,attr"`
+	Href     string   `xml:"href,attr"`
+}
+type Message struct {
+	XMLName  xml.Name `xml:"http://www.daisy.org/ns/pipeline/data message"`
+	Level    string   `xml:"level,attr"`
+	Sequence string   `xml:"sequence,attr"`
+}
+type Log struct {
+	XMLName xml.Name `xml:"http://www.daisy.org/ns/pipeline/data log"`
+	Href    string   `xml:"href,attr"`
 }
