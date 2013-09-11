@@ -14,6 +14,8 @@ const (
 	scriptsXml = "<?xml version='1.0' encoding='UTF-8' standalone='no'?><scripts href='http://localhost:8181/ws/scripts' xmlns='http://www.daisy.org/ns/pipeline/data' ><script href='http://localhost:8181/ws/scripts/zedai-to-epub3' id='zedai-to-epub3'><nicename>ZedAI to EPUB3</nicename><description>Transforms a ZedAI (DAISY 4 XML) document into an EPUB 3 publication.</description></script><script href='http://localhost:8181/ws/scripts/dtbook-to-html' id='dtbook-to-html'><nicename>DTBook to HTML</nicename><description>Transforms DTBook XML into HTML.</description></script><script href='http://localhost:8181/ws/scripts/dtbook-to-zedai' id='dtbook-to-zedai'><nicename>DTBook to ZedAI</nicename><description>Transforms DTBook XML into ZedAI XML.</description></script></scripts>"
 
 	scriptXml = "<?xml version='1.0' encoding='UTF-8' standalone='no'?><script href='http://localhost:8181/ws/scripts/dtbook-to-zedai' id='dtbook-to-zedai' xmlns='http://www.daisy.org/ns/pipeline/data'><nicename>DTBook to ZedAI</nicename><description>Transforms DTBook XML into ZedAI XML.</description><homepage>http://code.google.com/p/daisy-pipeline/wiki/DTBookToZedAI</homepage><input desc='One or more DTBook files to be transformed. In the case of multiple files, a merge will be performed.' mediaType='application/x-dtbook+xml' name='source' sequence='true'/><option desc='The directory to store the generated files in.' name='output-dir' ordered='true' outputType='result' required='true' sequence='false' type='anyDirURI'/></script>"
+	jobCreationOk= "<job xmlns='http://www.daisy.org/ns/pipeline/data' id='job-id-01' href='http://example.org/ws/jobs/job-id-01' status='DONE'/>"
+
 )
 
 var expected = map[string]interface{}{
@@ -73,7 +75,7 @@ func emptyClientMock() doer {
 	return MockClient{status: 200, response: ""}
 }
 func createPipeline(maker func() doer) Pipeline {
-	return Pipeline{BaseUrl: "", clientMaker: maker}
+	return Pipeline{BaseUrl: "base/", clientMaker: maker}
 }
 
 
@@ -151,7 +153,7 @@ func TestDoReq(t *testing.T) {
 	var alive Alive
 	pipeline := createPipeline(emptyClientMock)
 	r := pipeline.newResquest(API_ALIVE, &alive,nil)
-	if r.Url != "alive" {
+	if r.Url != "base/alive" {
 		t.Errorf("Alive path set to %v", r.Url)
 	}
 
@@ -173,7 +175,7 @@ func TestReqScripts(t *testing.T) {
 	var scripts Scripts
 	pipeline := createPipeline(emptyClientMock)
 	r := pipeline.newResquest(API_SCRIPTS, &scripts,nil)
-	if r.Url != "scripts" {
+	if r.Url != "base/scripts" {
 		t.Errorf("Scripts path set to %v", r.Url)
 	}
 
@@ -198,7 +200,7 @@ func TestReqScript(t *testing.T) {
 	var script Script
 	pipeline := createPipeline(emptyClientMock)
 	r := pipeline.newResquest(API_SCRIPT, &script,nil, "test")
-	if r.Url != "scripts/test" {
+	if r.Url != "base/scripts/test" {
 		t.Errorf("Scripts path set to %v", r.Url)
 	}
 
@@ -228,12 +230,20 @@ func TestScript(t *testing.T) {
 	}
 }
 func TestJobReq(t *testing.T) {
-        pipeline := createPipeline(clientMock("", 201))
+        pipeline := createPipeline(clientMock(jobCreationOk, 201))
         res, err := pipeline.JobRequest(expected[API_JOBREQUEST].(JobRequest))
         if err!=nil{
                 t.Errorf("Error not nil %v", err)
         }
-        if res!=true{
-                t.Error("Status is not ok", err)
+        if res.Id==""{
+                t.Error("job id not ok", err)
+        }
+}
+
+func TestScriptUrl(t *testing.T){
+        pipeline := createPipeline(clientMock("", 0))
+        url:=pipeline.ScriptUrl("unpalo")
+        if url!="base/scripts/unpalo"{
+                t.Errorf("Script url \nexpected %v \nresult %v","base/scripts/unpalo",url)
         }
 }

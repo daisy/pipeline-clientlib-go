@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/capitancambio/restclient"
 	"io"
+        "log"
 )
 
 //Available api entry names
@@ -36,7 +37,7 @@ var apiEntries = map[string]apiEntry{
 	API_ALIVE:      apiEntry{"alive", "GET", 200},
 	API_SCRIPTS:    apiEntry{"scripts", "GET", 200},
 	API_SCRIPT:     apiEntry{"scripts/%v", "GET", 200},
-	API_JOBREQUEST: apiEntry{"jobs/%v", "POST", 201},
+	API_JOBREQUEST: apiEntry{"jobs", "POST", 201},
 }
 
 //Default error handler has generic treatment for errors derived from the http status
@@ -162,17 +163,18 @@ func (p Pipeline) Script(id string) (script Script, err error) {
 	_, err = p.do(req, errorHandler(map[int]string{404: "Script " + id + " not found"}))
 	return
 }
-
+func (p Pipeline) ScriptUrl(id string) string{
+	req := p.newResquest(API_SCRIPT, nil, nil, id)
+        return req.Url
+}
 //JobRequest
 
-
-func (p Pipeline) JobRequest(newJob JobRequest) (ok bool, err error) {
-	req := p.newResquest(API_SCRIPT, nil, &newJob)
+func (p Pipeline) JobRequest(newJob JobRequest) (job  Job, err error) {
+        log.Println("Sending job request")
+        log.Println(newJob.Script.Id)
+	req := p.newResquest(API_JOBREQUEST,&job , &newJob)
         _, err = p.do(req, errorHandler(map[int]string{
                 400:"Job request is not valid",
         }))
-	if err == nil {
-		ok=true
-	}
 	return
 }
