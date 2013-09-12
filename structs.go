@@ -87,6 +87,33 @@ type JobRequest struct {
 	Callback []Callback `xml:"http://www.daisy.org/ns/pipeline/data callback,omitempty"`
 }
 
+type Job struct {
+	XMLName  xml.Name `xml:"http://www.daisy.org/ns/pipeline/data job"`
+	Nicename string   `xml:"http://www.daisy.org/ns/pipeline/data nicename"`
+	Script   `xml:"http://www.daisy.org/ns/pipeline/data script"`
+	Messages []Message `xml:"http://www.daisy.org/ns/pipeline/data messages>message"`
+	Log      Log       `xml:"http://www.daisy.org/ns/pipeline/data log"`
+	Results  Results   `xml:"http://www.daisy.org/ns/pipeline/data results"`
+	Status   string    `xml:"status,attr"`
+	Href     string    `xml:"href,attr"`
+	Id       string    `xml:"id,attr"`
+}
+type Result struct {
+	XMLName  xml.Name `xml:"http://www.daisy.org/ns/pipeline/data result"`
+	MimeType string   `xml:"mime-type,attr"`
+	Href     string   `xml:"href,attr"`
+	Result   []Result `xml:"http://www.daisy.org/ns/pipeline/data result"`
+}
+type Message struct {
+	XMLName  xml.Name `xml:"http://www.daisy.org/ns/pipeline/data message"`
+	Level    string   `xml:"level,attr"`
+	Sequence int      `xml:"sequence,attr"`
+	Content  string   `xml:",chardata"`
+}
+type Log struct {
+	XMLName xml.Name `xml:"http://www.daisy.org/ns/pipeline/data log"`
+	Href    string   `xml:"href,attr"`
+}
 type Messages struct {
 	XMLName xml.Name `xml:"http://www.daisy.org/ns/pipeline/data messages"`
 	Message `xml:"http://www.daisy.org/ns/pipeline/data message"`
@@ -96,29 +123,4 @@ type Results struct {
 	Result   []Result `xml:"http://www.daisy.org/ns/pipeline/data result"`
 	Href     string   `xml:"href,attr"`
 	MimeType string   `xml:"mime-type,attr"`
-}
-type Job struct {
-	XMLName  xml.Name `xml:"http://www.daisy.org/ns/pipeline/data job"`
-	Nicename string   `xml:"http://www.daisy.org/ns/pipeline/data nicename"`
-	Script   `xml:"http://www.daisy.org/ns/pipeline/data script"`
-	Messages Messages `xml:"http://www.daisy.org/ns/pipeline/data messages"`
-	Log      Log `xml:"http://www.daisy.org/ns/pipeline/data log"`
-	Results  Results `xml:"http://www.daisy.org/ns/pipeline/data results"`
-	Status   string `xml:"status,attr"`
-	Href     string `xml:"href,attr"`
-	Id       string `xml:"id,attr"`
-}
-type Result struct {
-	XMLName  xml.Name `xml:"http://www.daisy.org/ns/pipeline/data result"`
-	MimeType string   `xml:"mime-type,attr"`
-	Href     string   `xml:"href,attr"`
-}
-type Message struct {
-	XMLName  xml.Name `xml:"http://www.daisy.org/ns/pipeline/data message"`
-	Level    string   `xml:"level,attr"`
-	Sequence string   `xml:"sequence,attr"`
-}
-type Log struct {
-	XMLName xml.Name `xml:"http://www.daisy.org/ns/pipeline/data log"`
-	Href    string   `xml:"href,attr"`
 }

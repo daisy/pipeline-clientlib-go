@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/capitancambio/restclient"
 	"io"
-        "log"
+	"log"
 )
 
 //Available api entry names
@@ -15,6 +15,7 @@ const (
 	API_SCRIPT     = "script"
 	API_SCRIPTS    = "scripts"
 	API_JOBREQUEST = "jobRequest"
+	API_JOB        = "jobs"
 )
 
 //Error messages
@@ -38,6 +39,7 @@ var apiEntries = map[string]apiEntry{
 	API_SCRIPTS:    apiEntry{"scripts", "GET", 200},
 	API_SCRIPT:     apiEntry{"scripts/%v", "GET", 200},
 	API_JOBREQUEST: apiEntry{"jobs", "POST", 201},
+	API_JOB:        apiEntry{"jobs/%v?msgSeq=%v", "GET", 200},
 }
 
 //Default error handler has generic treatment for errors derived from the http status
@@ -127,7 +129,6 @@ func (p Pipeline) do(req *restclient.RequestResponse, handler func(int, restclie
 	return
 }
 
-
 //Returns a simple string representation of the Alive struct in the format:
 //Alive:[#authentication:value #mode:value #version:value]
 func (a Alive) String() string {
@@ -163,18 +164,27 @@ func (p Pipeline) Script(id string) (script Script, err error) {
 	_, err = p.do(req, errorHandler(map[int]string{404: "Script " + id + " not found"}))
 	return
 }
-func (p Pipeline) ScriptUrl(id string) string{
+func (p Pipeline) ScriptUrl(id string) string {
 	req := p.newResquest(API_SCRIPT, nil, nil, id)
-        return req.Url
+	return req.Url
 }
+
 //JobRequest
 
-func (p Pipeline) JobRequest(newJob JobRequest) (job  Job, err error) {
-        log.Println("Sending job request")
-        log.Println(newJob.Script.Id)
-	req := p.newResquest(API_JOBREQUEST,&job , &newJob)
-        _, err = p.do(req, errorHandler(map[int]string{
-                400:"Job request is not valid",
+func (p Pipeline) JobRequest(newJob JobRequest) (job Job, err error) {
+	log.Println("Sending job request")
+	log.Println(newJob.Script.Id)
+	req := p.newResquest(API_JOBREQUEST, &job, &newJob)
+	_, err = p.do(req, errorHandler(map[int]string{
+		400: "Job request is not valid",
+	}))
+	return
+}
+
+func (p Pipeline) Job(id string, messageSequence int) (job Job, err error) {
+	req := p.newResquest(API_JOB, &job, nil, id,messageSequence)
+	_, err = p.do(req, errorHandler(map[int]string{
+                404: "Job " + id + " not found",
         }))
 	return
 }
