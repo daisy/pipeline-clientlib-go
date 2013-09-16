@@ -17,6 +17,7 @@ const (
 	API_JOBREQUEST = "jobRequest"
 	API_JOB        = "jobs"
 	API_DEL_JOB    = "del_job"
+	API_RESULT     = "results"
 )
 
 //Error messages
@@ -42,6 +43,7 @@ var apiEntries = map[string]apiEntry{
 	API_JOBREQUEST: apiEntry{"jobs", "POST", 201},
 	API_JOB:        apiEntry{"jobs/%v?msgSeq=%v", "GET", 200},
 	API_DEL_JOB:    apiEntry{"jobs/%v", "DELETE", 204},
+	API_RESULT:     apiEntry{"jobs/%v/results", "GET", 200},
 }
 
 //Default error handler has generic treatment for errors derived from the http status
@@ -88,6 +90,7 @@ func NewPipeline(baseUrl string) *Pipeline {
 //Convinience interface for testing
 type doer interface {
 	Do(*restclient.RequestResponse) (status int, err error)
+	SetDecoderSupplier(func(io.Reader) restclient.Decoder)
 }
 
 //Creates a new client setting the correct encoders
@@ -128,12 +131,12 @@ func (p Pipeline) newResquest(apiEntry string, targetPtr interface{}, postData i
 //Executes the request against the client
 func (p Pipeline) do(req *restclient.RequestResponse, handler func(int, restclient.RequestResponse) error) (status int, err error) {
 	status, err = p.clientMaker().Do(req)
-        if err!=nil {
-                if err==restclient.UnexpectedStatus{
-                        err=handler(status,*req)
-                }
-                return
-        }
+	if err != nil {
+		if err == restclient.UnexpectedStatus {
+			err = handler(status, *req)
+		}
+		return
+	}
 	return
 }
 
@@ -202,8 +205,34 @@ func (p Pipeline) DeleteJob(id string) (ok bool, err error) {
 	_, err = p.do(req, errorHandler(map[int]string{
 		404: "Job " + id + " not found",
 	}))
-        if err==nil{
-                ok=true
-        }
+	if err == nil {
+		ok = true
+	}
 	return
+}
+
+//Overrides the xml decoder to get raw data
+func resultClientMaker(p Pipeline) func() doer {
+	return func() doer {
+		cli := p.clientMaker()
+		cli.SetDecoderSupplier(func(r io.Reader) restclient.Decoder {
+			return NewRawDataDecoder(r)
+		})
+		return cli
+	}
+}
+
+//return the results as an array of bytes
+func (p Pipeline) Results(id string) (data []byte, err error) {
+	//override the client maker
+	p.clientMaker = resultClientMaker(p)
+	rd := &RawData{Data: new([]byte)}
+	req := p.newResquest(API_RESULT, rd, nil, id)
+	_, err = p.do(req, errorHandler(map[int]string{
+		404: "Job " + id + " not found",
+	}))
+	if err != nil {
+		return nil, err
+	}
+	return *(rd.Data), nil
 }

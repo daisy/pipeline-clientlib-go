@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"github.com/capitancambio/restclient"
+	"io"
 	"testing"
 )
 
@@ -81,26 +82,40 @@ var expected = map[string]interface{}{
 }
 
 type MockClient struct {
-	status   int
-	response string
+	status          int
+	response        string
+	EncoderSupplier func(io.Writer) restclient.Encoder //Supplies the endoder objects
+	DecoderSupplier func(io.Reader) restclient.Decoder //Supplies the endoder objects
 }
 
+func (m *MockClient) SetDecoderSupplier(fn func(io.Reader) restclient.Decoder) {
+	m.DecoderSupplier = fn
+}
 func (m MockClient) Do(rr *restclient.RequestResponse) (status int, err error) {
 	if m.response != "" {
-		err = xml.NewDecoder(bytes.NewBufferString(m.response)).Decode(rr.Result)
+		err = m.DecoderSupplier(bytes.NewBufferString(m.response)).Decode(rr.Result)
 	}
 	return m.status, err
 }
 func clientMock(response string, status int) func() doer {
 
 	return func() doer {
-		return MockClient{status: status, response: response}
+		return &MockClient{
+			status:   status,
+			response: response,
+			EncoderSupplier: func(w io.Writer) restclient.Encoder {
+				return xml.NewEncoder(w)
+			},
+			DecoderSupplier: func(r io.Reader) restclient.Decoder {
+				return xml.NewDecoder(r)
+			},
+		}
 	}
 
 }
 
 func emptyClientMock() doer {
-	return MockClient{status: 200, response: ""}
+	return &MockClient{status: 200, response: ""}
 }
 func createPipeline(maker func() doer) Pipeline {
 	return Pipeline{BaseUrl: "base/", clientMaker: maker}
@@ -288,19 +303,32 @@ func TestJob(t *testing.T) {
 		t.Errorf(T_STRING, "id", expJob.Id, res.Id)
 	}
 
-	if expJob.Nicename!= res.Nicename{
+	if expJob.Nicename != res.Nicename {
 		t.Errorf(T_STRING, "nicename", expJob.Id, res.Id)
 	}
-	if expJob.Log.Href!= res.Log.Href{
+	if expJob.Log.Href != res.Log.Href {
 		t.Errorf(T_STRING, "log", expJob.Id, res.Id)
 	}
-        if len(res.Results.Result)!=2{
-                t.Errorf(T_STRING,"results len",2,len(res.Results.Result))
-        }
-        if len(res.Results.Result[0].Result)!=1{
-                t.Errorf(T_STRING,"results len",1,len(res.Results.Result[0].Result))
-        }
-        if len(res.Results.Result[1].Result)!=2{
-                t.Errorf(T_STRING,"results len",2,len(res.Results.Result[1].Result))
-        }
+	if len(res.Results.Result) != 2 {
+		t.Errorf(T_STRING, "results len", 2, len(res.Results.Result))
+	}
+	if len(res.Results.Result[0].Result) != 1 {
+		t.Errorf(T_STRING, "results len", 1, len(res.Results.Result[0].Result))
+	}
+	if len(res.Results.Result[1].Result) != 2 {
+		t.Errorf(T_STRING, "results len", 2, len(res.Results.Result[1].Result))
+	}
+}
+
+func TestResults(t *testing.T) {
+	msg := "learn to swim"
+	pipeline := createPipeline(clientMock(msg, 200))
+	data, err := pipeline.Results("id")
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	res := string(data)
+	if msg != res {
+		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "msg ", msg, res)
+	}
 }
