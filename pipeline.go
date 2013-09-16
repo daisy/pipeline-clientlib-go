@@ -16,6 +16,7 @@ const (
 	API_SCRIPTS    = "scripts"
 	API_JOBREQUEST = "jobRequest"
 	API_JOB        = "jobs"
+	API_DEL_JOB    = "del_job"
 )
 
 //Error messages
@@ -40,6 +41,7 @@ var apiEntries = map[string]apiEntry{
 	API_SCRIPT:     apiEntry{"scripts/%v", "GET", 200},
 	API_JOBREQUEST: apiEntry{"jobs", "POST", 201},
 	API_JOB:        apiEntry{"jobs/%v?msgSeq=%v", "GET", 200},
+	API_DEL_JOB:    apiEntry{"jobs/%v", "DELETE", 204},
 }
 
 //Default error handler has generic treatment for errors derived from the http status
@@ -126,6 +128,12 @@ func (p Pipeline) newResquest(apiEntry string, targetPtr interface{}, postData i
 //Executes the request against the client
 func (p Pipeline) do(req *restclient.RequestResponse, handler func(int, restclient.RequestResponse) error) (status int, err error) {
 	status, err = p.clientMaker().Do(req)
+        if err!=nil {
+                if err==restclient.UnexpectedStatus{
+                        err=handler(status,*req)
+                }
+                return
+        }
 	return
 }
 
@@ -182,9 +190,20 @@ func (p Pipeline) JobRequest(newJob JobRequest) (job Job, err error) {
 }
 
 func (p Pipeline) Job(id string, messageSequence int) (job Job, err error) {
-	req := p.newResquest(API_JOB, &job, nil, id,messageSequence)
+	req := p.newResquest(API_JOB, &job, nil, id, messageSequence)
 	_, err = p.do(req, errorHandler(map[int]string{
-                404: "Job " + id + " not found",
-        }))
+		404: "Job " + id + " not found",
+	}))
+	return
+}
+
+func (p Pipeline) DeleteJob(id string) (ok bool, err error) {
+	req := p.newResquest(API_DEL_JOB, nil, nil, id)
+	_, err = p.do(req, errorHandler(map[int]string{
+		404: "Job " + id + " not found",
+	}))
+        if err==nil{
+                ok=true
+        }
 	return
 }
