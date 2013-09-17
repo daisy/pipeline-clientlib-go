@@ -39,7 +39,7 @@ const (
                         </job>
 
                 `
-	ERROR = `
+	errorXml = `
 <?xml version="1.0" encoding="UTF-8"?>
 <error query="http://localhost:8181/ws/jobs" xmlns="http://www.daisy.org/ns/pipeline/data">
     <description>Error while acquiring jobs</description>
@@ -47,6 +47,18 @@ const (
     </trace>
 </error>
         `
+	jobsXml = `
+<jobs xmlns="http://www.daisy.org/ns/pipeline/data" href="http://example.org/ws/jobs">
+    <job id="job-id-01" href="http://example.org/ws/jobs/job-id-01" status="DONE">
+        <nicename>job1</nicename>
+    </job>
+    <job id="job-id-02" href="http://example.org/ws/jobs/job-id-02" status="ERROR"/>
+    <job id="job-id-03" href="http://example.org/ws/jobs/job-id-03" status="IDLE"/>
+    <job id="job-id-04" href="http://example.org/ws/jobs/job-id-04" status="RUNNING">
+        <nicename>job4</nicename>
+    </job>
+</jobs>
+`
 	T_STRING = "Wrong %v\nexpected: %v\nresult:%v\n"
 )
 
@@ -105,9 +117,9 @@ func (m MockClient) Do(rr *restclient.RequestResponse) (status int, err error) {
 		err = m.DecoderSupplier(bytes.NewBufferString(m.response)).Decode(rr.Result)
 	}
 	if m.fail {
-		err = m.DecoderSupplier(bytes.NewBufferString(ERROR)).Decode(rr.Error)
+		err = m.DecoderSupplier(bytes.NewBufferString(errorXml)).Decode(rr.Error)
 		if err != nil {
-			println("THIS ERROR SHOULD NOT HAPPEN")
+			println("THIS errorXml SHOULD NOT HAPPEN")
 			panic(err.Error())
 		}
 	}
@@ -374,4 +386,23 @@ func TestResults(t *testing.T) {
 	if msg != res {
 		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "msg ", msg, res)
 	}
+}
+
+func TestJobs(t *testing.T) {
+	pipeline := createPipeline(clientMock(jobsXml, 200))
+	res, err := pipeline.Jobs()
+	idTemp := "job-id-0%v"
+	if err != nil {
+		t.Errorf("Error not nil %v", err)
+	}
+	if len(res.Jobs) != 4 {
+		t.Errorf("Wrong jobs size", res.Jobs)
+	}
+	for idx, job := range res.Jobs {
+                jobId:=fmt.Sprintf(idTemp,idx+1)
+		if jobId != job.Id {
+			t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "jobId ", jobId ,  job.Id )
+		}
+	}
+
 }

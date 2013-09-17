@@ -16,6 +16,7 @@ const (
 	API_SCRIPTS    = "scripts"
 	API_JOBREQUEST = "jobRequest"
 	API_JOB        = "jobs"
+	API_JOBS       = "jobs"
 	API_DEL_JOB    = "del_job"
 	API_RESULT     = "results"
 )
@@ -137,7 +138,7 @@ func (p Pipeline) do(req *restclient.RequestResponse, handler func(int, restclie
 		}
 		return
 	}
-        errStr:= req.Error.(*Error).Description
+	errStr := req.Error.(*Error).Description
 	if errStr != "" {
 		return status, fmt.Errorf("WS ERROR: %v", errStr)
 	}
@@ -201,6 +202,12 @@ func (p Pipeline) Job(id string, messageSequence int) (job Job, err error) {
 	_, err = p.do(req, errorHandler(map[int]string{
 		404: "Job " + id + " not found",
 	}))
+	return
+}
+
+func (p Pipeline) Jobs() (jobs Jobs, err error) {
+	req := p.newResquest(API_JOBS, &jobs, nil)
+	_, err = p.do(req, defaultErrorHandler())
 	return
 }
 

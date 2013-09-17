@@ -124,3 +124,9 @@ type Results struct {
 	Href     string   `xml:"href,attr"`
 	MimeType string   `xml:"mime-type,attr"`
 }
+
+type Jobs struct {
+	XMLName xml.Name `xml:"http://www.daisy.org/ns/pipeline/data jobs"`
+	Jobs     []Job    `xml:"http://www.daisy.org/ns/pipeline/data job"`
+	Href    string   `xml:"href,attr"`
+}
