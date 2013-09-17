@@ -43,7 +43,7 @@ var apiEntries = map[string]apiEntry{
 	API_JOBREQUEST: apiEntry{"jobs", "POST", 201},
 	API_JOB:        apiEntry{"jobs/%v?msgSeq=%v", "GET", 200},
 	API_DEL_JOB:    apiEntry{"jobs/%v", "DELETE", 204},
-	API_RESULT:     apiEntry{"jobs/%v/results", "GET", 200},
+	API_RESULT:     apiEntry{"jobs/%v/result", "GET", 200},
 }
 
 //Default error handler has generic treatment for errors derived from the http status
