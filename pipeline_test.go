@@ -39,6 +39,14 @@ const (
                         </job>
 
                 `
+	ERROR = `
+<?xml version="1.0" encoding="UTF-8"?>
+<error query="http://localhost:8181/ws/jobs" xmlns="http://www.daisy.org/ns/pipeline/data">
+    <description>Error while acquiring jobs</description>
+    <trace>
+    </trace>
+</error>
+        `
 	T_STRING = "Wrong %v\nexpected: %v\nresult:%v\n"
 )
 
@@ -86,6 +94,7 @@ type MockClient struct {
 	response        string
 	EncoderSupplier func(io.Writer) restclient.Encoder //Supplies the endoder objects
 	DecoderSupplier func(io.Reader) restclient.Decoder //Supplies the endoder objects
+	fail            bool
 }
 
 func (m *MockClient) SetDecoderSupplier(fn func(io.Reader) restclient.Decoder) {
@@ -94,6 +103,13 @@ func (m *MockClient) SetDecoderSupplier(fn func(io.Reader) restclient.Decoder) {
 func (m MockClient) Do(rr *restclient.RequestResponse) (status int, err error) {
 	if m.response != "" {
 		err = m.DecoderSupplier(bytes.NewBufferString(m.response)).Decode(rr.Result)
+	}
+	if m.fail {
+		err = m.DecoderSupplier(bytes.NewBufferString(ERROR)).Decode(rr.Error)
+		if err != nil {
+			println("THIS ERROR SHOULD NOT HAPPEN")
+			panic(err.Error())
+		}
 	}
 	return m.status, err
 }
@@ -109,6 +125,25 @@ func clientMock(response string, status int) func() doer {
 			DecoderSupplier: func(r io.Reader) restclient.Decoder {
 				return xml.NewDecoder(r)
 			},
+			fail: false,
+		}
+	}
+
+}
+
+func failingMock() func() doer {
+
+	return func() doer {
+		return &MockClient{
+			status:   200,
+			response: "",
+			EncoderSupplier: func(w io.Writer) restclient.Encoder {
+				return xml.NewEncoder(w)
+			},
+			DecoderSupplier: func(r io.Reader) restclient.Decoder {
+				return xml.NewDecoder(r)
+			},
+			fail: true,
 		}
 	}
 
@@ -202,6 +237,14 @@ func TestDoReq(t *testing.T) {
 
 }
 
+func TestServerError(t *testing.T) {
+	cli := failingMock()
+	pipeline := createPipeline(cli)
+	_, err := pipeline.Alive()
+	if err == nil {
+		t.Errorf("Exepecte error not thrown")
+	}
+}
 func TestAlive(t *testing.T) {
 	pipeline := createPipeline(clientMock(aliveXml, 200))
 	alive, err := pipeline.Alive()

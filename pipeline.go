@@ -137,6 +137,10 @@ func (p Pipeline) do(req *restclient.RequestResponse, handler func(int, restclie
 		}
 		return
 	}
+        errStr:= req.Error.(*Error).Description
+	if errStr != "" {
+		return status, fmt.Errorf("WS ERROR: %v", errStr)
+	}
 	return
 }
 

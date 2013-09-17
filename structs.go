@@ -7,8 +7,8 @@ import (
 //Error with information from the server
 type Error struct {
 	XMLName     xml.Name `xml:"http://www.daisy.org/ns/pipeline/data error"`
-	Description string   `xml:"http://www.daisy.org/ns/pipeline/data error>description"`
-	Trace       string   `xml:"http://www.daisy.org/ns/pipeline/data error>trace"`
+	Description string   `xml:"http://www.daisy.org/ns/pipeline/data description"`
+	Trace       string   `xml:"http://www.daisy.org/ns/pipeline/data trace"`
 	Query       string   `xml:"query,attr"`
 }
 
