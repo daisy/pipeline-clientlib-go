@@ -15,7 +15,7 @@ const (
 	API_SCRIPT     = "script"
 	API_SCRIPTS    = "scripts"
 	API_JOBREQUEST = "jobRequest"
-	API_JOB        = "jobs"
+	API_JOB        = "job"
 	API_JOBS       = "jobs"
 	API_DEL_JOB    = "del_job"
 	API_RESULT     = "results"
@@ -45,6 +45,7 @@ var apiEntries = map[string]apiEntry{
 	API_JOB:        apiEntry{"jobs/%v?msgSeq=%v", "GET", 200},
 	API_DEL_JOB:    apiEntry{"jobs/%v", "DELETE", 204},
 	API_RESULT:     apiEntry{"jobs/%v/result", "GET", 200},
+	API_JOBS:        apiEntry{"jobs", "GET", 200},
 }
 
 //Default error handler has generic treatment for errors derived from the http status

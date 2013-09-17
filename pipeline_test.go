@@ -399,9 +399,9 @@ func TestJobs(t *testing.T) {
 		t.Errorf("Wrong jobs size", res.Jobs)
 	}
 	for idx, job := range res.Jobs {
-                jobId:=fmt.Sprintf(idTemp,idx+1)
+		jobId := fmt.Sprintf(idTemp, idx+1)
 		if jobId != job.Id {
-			t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "jobId ", jobId ,  job.Id )
+			t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "jobId ", jobId, job.Id)
 		}
 	}
 
