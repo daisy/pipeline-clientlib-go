@@ -7,10 +7,23 @@ import (
 	"io/ioutil"
 )
 
+
 //Raw data struct defines a simple structure to
 //store bytes
 type RawData struct {
 	Data *[]byte //Data
+}
+
+func (r *RawData) SetBytes(b []byte) {
+	r.Data = &b
+}
+
+type ToBytes interface {
+	Bytes() []byte
+}
+
+type FromBytes interface {
+	SetBytes([]byte)
 }
 
 //RawDataDecoder allows to decode raw data into a RawData structure
@@ -25,10 +38,10 @@ func (d RawDataDecoder) Decode(v interface{}) error {
 		return err
 	}
 	switch v.(type) {
-	case *RawData:
-		(v.(*RawData)).Data = &data
+	case FromBytes:
+		(v.(FromBytes)).SetBytes(data)
 	default:
-		return errors.New("RawDataDecoder only admits *RawData")
+		return errors.New("RawDataDecoder only admits FromBytes interface")
 	}
 	return nil
 }
