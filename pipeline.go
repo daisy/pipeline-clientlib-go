@@ -45,7 +45,7 @@ var apiEntries = map[string]apiEntry{
 	API_JOB:        apiEntry{"jobs/%v?msgSeq=%v", "GET", 200},
 	API_DEL_JOB:    apiEntry{"jobs/%v", "DELETE", 204},
 	API_RESULT:     apiEntry{"jobs/%v/result", "GET", 200},
-	API_JOBS:        apiEntry{"jobs", "GET", 200},
+	API_JOBS:       apiEntry{"jobs", "GET", 200},
 }
 
 //Default error handler has generic treatment for errors derived from the http status
@@ -93,6 +93,7 @@ func NewPipeline(baseUrl string) *Pipeline {
 type doer interface {
 	Do(*restclient.RequestResponse) (status int, err error)
 	SetDecoderSupplier(func(io.Reader) restclient.Decoder)
+	SetEncoderSupplier(func(io.Writer) restclient.Encoder)
 }
 
 //Creates a new client setting the correct encoders
@@ -186,12 +187,34 @@ func (p Pipeline) ScriptUrl(id string) string {
 	return req.Url
 }
 
-//JobRequest
+//Overrides the xml decoder to get raw data
+func multipartResultClientMaker(p Pipeline) func() doer {
+	return func() doer {
+		cli := p.clientMaker()
+		cli.SetEncoderSupplier(func(r io.Writer) restclient.Encoder {
+			return NewMultipartEncoder(r)
+		})
+		return cli
+	}
+}
 
-func (p Pipeline) JobRequest(newJob JobRequest) (job Job, err error) {
+func buildMultipartReq(jobReq JobRequest, data []byte) *MultipartData {
+	return &MultipartData{
+		data:    RawData{&data},
+		request: jobReq,
+	}
+}
+
+//JobRequest
+func (p Pipeline) JobRequest(newJob JobRequest, data []byte) (job Job, err error) {
+	var reqData interface{} = &newJob
+	if len(data) < 0 {
+		p.clientMaker = multipartResultClientMaker(p)
+		reqData = buildMultipartReq(newJob, data)
+	}
 	log.Println("Sending job request")
 	log.Println(newJob.Script.Id)
-	req := p.newResquest(API_JOBREQUEST, &job, &newJob)
+	req := p.newResquest(API_JOBREQUEST, &job, reqData)
 	_, err = p.do(req, errorHandler(map[int]string{
 		400: "Job request is not valid",
 	}))

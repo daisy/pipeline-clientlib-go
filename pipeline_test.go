@@ -112,6 +112,9 @@ type MockClient struct {
 func (m *MockClient) SetDecoderSupplier(fn func(io.Reader) restclient.Decoder) {
 	m.DecoderSupplier = fn
 }
+func (m *MockClient) SetEncoderSupplier(fn func(io.Writer) restclient.Encoder) {
+	m.EncoderSupplier = fn
+}
 func (m MockClient) Do(rr *restclient.RequestResponse) (status int, err error) {
 	if m.response != "" {
 		err = m.DecoderSupplier(bytes.NewBufferString(m.response)).Decode(rr.Result)
@@ -329,7 +332,18 @@ func TestScript(t *testing.T) {
 }
 func TestJobReq(t *testing.T) {
 	pipeline := createPipeline(clientMock(jobCreationOk, 201))
-	res, err := pipeline.JobRequest(expected[API_JOBREQUEST].(JobRequest))
+	res, err := pipeline.JobRequest(expected[API_JOBREQUEST].(JobRequest), nil)
+	if err != nil {
+		t.Errorf("Error not nil %v", err)
+	}
+	if res.Id == "" {
+		t.Error("job id not ok", err)
+	}
+}
+func TestJobReqMultipart(t *testing.T) {
+	pipeline := createPipeline(clientMock(jobCreationOk, 201))
+	data := []byte("data")
+	res, err := pipeline.JobRequest(expected[API_JOBREQUEST].(JobRequest), data)
 	if err != nil {
 		t.Errorf("Error not nil %v", err)
 	}
