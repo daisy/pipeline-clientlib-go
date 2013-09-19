@@ -3,6 +3,8 @@ package pipeline
 import (
 	"bytes"
 	"encoding/xml"
+	"fmt"
+	"io/ioutil"
 	"mime/multipart"
 	"testing"
 )
@@ -69,7 +71,6 @@ func TestMultipartEncodingErr(t *testing.T) {
 }
 
 func TestMultipartEncoding(t *testing.T) {
-	boundary := "inevergonnagiveyouup"
 	msg := []byte("hey yo")
 	rData := RawData{Data: &msg}
 	scrId := "test"
@@ -88,15 +89,24 @@ func TestMultipartEncoding(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
+	//println(buf.String())
 	r := multipart.NewReader(buf, boundary)
 	form, err := r.ReadForm(1024)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
 
-	res := form.Value["job-data"][0]
-	if string(msg) != res {
-		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "string(msg) ", string(msg), res)
+	fmt.Printf("%+v", form.File)
+	file, err := form.File["job-data"][0].Open()
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	res, err := ioutil.ReadAll(file)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if string(msg) != string(res) {
+		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "string(msg) ", string(msg), string(res))
 	}
 	buf = bytes.NewBufferString(form.Value["job-request"][0])
 	resJob := JobRequest{}

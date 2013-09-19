@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"mime/multipart"
+	"net/textproto"
 )
 
 type MultipartData struct {
@@ -19,8 +20,10 @@ type MultipartEncoder struct {
 	boundary string
 }
 
+var boundary = "pipelininginthefreeworld001"
+
 func NewMultipartEncoder(w io.Writer) *MultipartEncoder {
-	return &MultipartEncoder{w, ""}
+	return &MultipartEncoder{w, boundary}
 }
 func (me MultipartEncoder) Encode(v interface{}) error {
 	//get the fields
@@ -36,19 +39,32 @@ func (me MultipartEncoder) Encode(v interface{}) error {
 	if me.boundary != "" {
 		w.SetBoundary(me.boundary)
 	}
-	reqWriter, err := w.CreateFormField("job-request")
-	if err != nil {
-		return err
-	}
-	err = xml.NewEncoder(reqWriter).Encode(mpData.request)
-	if err != nil {
-		return err
-	}
-	dataWriter, err := w.CreateFormField("job-data")
+	//Content-Disposition: form-data; name="job-data"; filename="/home/javi/daisy/pipeline-cli/samples/dtbook/dtbook.zip"
+	//Content-Transfer-Encoding: binary
+	//Content-Type: application/zip
+	headerData := make(textproto.MIMEHeader)
+	headerData.Add("Content-Disposition", `form-data; name="job-data"; filename="pipeline-client-go-data.zip"`)
+	headerData.Add("Content-Transfer-Encoding", "binary")
+	headerData.Add("Content-Type", "application/zip")
+
+	dataWriter, err := w.CreatePart(headerData)
 	if err != nil {
 		return err
 	}
 	err = NewRawDataEncoder(dataWriter).Encode(mpData.data)
+	if err != nil {
+		return err
+	}
+
+	headerXml := make(textproto.MIMEHeader)
+	headerXml.Add("Content-Disposition", `form-data; name="job-request"`)
+	headerXml.Add("Content-Type", "application/xml; charset=utf-8")
+	reqWriter, err := w.CreatePart(headerXml)
+	if err != nil {
+		return err
+	}
+	//reqWriter.Close()
+	err = xml.NewEncoder(reqWriter).Encode(mpData.request)
 	if err != nil {
 		return err
 	}

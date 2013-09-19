@@ -94,6 +94,7 @@ type doer interface {
 	Do(*restclient.RequestResponse) (status int, err error)
 	SetDecoderSupplier(func(io.Reader) restclient.Decoder)
 	SetEncoderSupplier(func(io.Writer) restclient.Encoder)
+	SetContentType(string)
 }
 
 //Creates a new client setting the correct encoders
@@ -194,6 +195,7 @@ func multipartResultClientMaker(p Pipeline) func() doer {
 		cli.SetEncoderSupplier(func(r io.Writer) restclient.Encoder {
 			return NewMultipartEncoder(r)
 		})
+		cli.SetContentType("multipart/form-data; boundary=" + boundary)
 		return cli
 	}
 }
@@ -208,7 +210,9 @@ func buildMultipartReq(jobReq JobRequest, data []byte) *MultipartData {
 //JobRequest
 func (p Pipeline) JobRequest(newJob JobRequest, data []byte) (job Job, err error) {
 	var reqData interface{} = &newJob
-	if len(data) < 0 {
+	log.Println("data len request ", len(data))
+	if len(data) > 0 {
+		log.Println("Sending multipart job request")
 		p.clientMaker = multipartResultClientMaker(p)
 		reqData = buildMultipartReq(newJob, data)
 	}

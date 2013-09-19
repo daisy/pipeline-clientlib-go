@@ -115,6 +115,8 @@ func (m *MockClient) SetDecoderSupplier(fn func(io.Reader) restclient.Decoder) {
 func (m *MockClient) SetEncoderSupplier(fn func(io.Writer) restclient.Encoder) {
 	m.EncoderSupplier = fn
 }
+func (m *MockClient) SetContentType(string) {
+}
 func (m MockClient) Do(rr *restclient.RequestResponse) (status int, err error) {
 	if m.response != "" {
 		err = m.DecoderSupplier(bytes.NewBufferString(m.response)).Decode(rr.Result)
