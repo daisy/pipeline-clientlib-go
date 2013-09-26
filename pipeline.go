@@ -19,6 +19,7 @@ const (
 	API_JOBS       = "jobs"
 	API_DEL_JOB    = "del_job"
 	API_RESULT     = "results"
+	API_HALT       = "halt"
 )
 
 //Error messages
@@ -46,6 +47,7 @@ var apiEntries = map[string]apiEntry{
 	API_DEL_JOB:    apiEntry{"jobs/%v", "DELETE", 204},
 	API_RESULT:     apiEntry{"jobs/%v/result", "GET", 200},
 	API_JOBS:       apiEntry{"jobs", "GET", 200},
+	API_HALT:       apiEntry{"admin/halt/%v", "GET", 204},
 }
 
 //Default error handler has generic treatment for errors derived from the http status
@@ -274,4 +276,12 @@ func (p Pipeline) Results(id string) (data []byte, err error) {
 		return nil, err
 	}
 	return *(rd.Data), nil
+}
+
+//Halts the ws
+func (p Pipeline) Halt(key string) error {
+	//override the client maker
+	req := p.newResquest(API_HALT, nil, nil, key)
+	_, err := p.do(req, defaultErrorHandler())
+	return err
 }
