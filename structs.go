@@ -81,7 +81,8 @@ type Callback struct {
 
 type JobRequest struct {
 	XMLName  xml.Name   `xml:"http://www.daisy.org/ns/pipeline/data jobRequest"`
-	Script   Script     `xml:"http://www.daisy.org/ns/pipeline/data script,omitempty"`
+	Nicename string     `xml:"http://www.daisy.org/ns/pipeline/data nicename,omitempty"`
+	Script   Script     `xml:"http://www.daisy.org/ns/pipeline/data script"`
 	Inputs   []Input    `xml:"http://www.daisy.org/ns/pipeline/data input,omitempty"`
 	Options  []Option   `xml:"http://www.daisy.org/ns/pipeline/data option,omitempty"`
 	Callback []Callback `xml:"http://www.daisy.org/ns/pipeline/data callback,omitempty"`
@@ -127,6 +128,6 @@ type Results struct {
 
 type Jobs struct {
 	XMLName xml.Name `xml:"http://www.daisy.org/ns/pipeline/data jobs"`
-	Jobs     []Job    `xml:"http://www.daisy.org/ns/pipeline/data job"`
+	Jobs    []Job    `xml:"http://www.daisy.org/ns/pipeline/data job"`
 	Href    string   `xml:"href,attr"`
 }
