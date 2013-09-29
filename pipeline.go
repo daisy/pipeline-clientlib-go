@@ -19,6 +19,7 @@ const (
 	API_JOBS       = "jobs"
 	API_DEL_JOB    = "del_job"
 	API_RESULT     = "results"
+	API_LOG        = "log"
 	API_HALT       = "halt"
 )
 
@@ -47,6 +48,7 @@ var apiEntries = map[string]apiEntry{
 	API_DEL_JOB:    apiEntry{"jobs/%v", "DELETE", 204},
 	API_RESULT:     apiEntry{"jobs/%v/result", "GET", 200},
 	API_JOBS:       apiEntry{"jobs", "GET", 200},
+	API_LOG:        apiEntry{"jobs/%v/log", "GET", 200},
 	API_HALT:       apiEntry{"admin/halt/%v", "GET", 204},
 }
 
@@ -269,6 +271,20 @@ func (p Pipeline) Results(id string) (data []byte, err error) {
 	p.clientMaker = resultClientMaker(p)
 	rd := &RawData{Data: new([]byte)}
 	req := p.newResquest(API_RESULT, rd, nil, id)
+	_, err = p.do(req, errorHandler(map[int]string{
+		404: "Job " + id + " not found",
+	}))
+	if err != nil {
+		return nil, err
+	}
+	return *(rd.Data), nil
+}
+
+//Gets the log file for a job
+func (p Pipeline) Log(id string) (data []byte, err error) {
+	p.clientMaker = resultClientMaker(p)
+	rd := &RawData{Data: new([]byte)}
+	req := p.newResquest(API_LOG, rd, nil, id)
 	_, err = p.do(req, errorHandler(map[int]string{
 		404: "Job " + id + " not found",
 	}))
