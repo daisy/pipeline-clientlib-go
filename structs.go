@@ -131,3 +131,19 @@ type Jobs struct {
 	Jobs    []Job    `xml:"http://www.daisy.org/ns/pipeline/data job"`
 	Href    string   `xml:"href,attr"`
 }
+
+//Admin stuff
+//overwriting client
+type Clients struct {
+	XMLName xml.Name `xml:"http://www.daisy.org/ns/pipeline/data clients"`
+	Clients  []Client `xml:"http://www.daisy.org/ns/pipeline/data client"`
+	Href    string   `xml:"href,attr"`
+}
+type Client struct {
+	XMLName xml.Name `xml:"http://www.daisy.org/ns/pipeline/data client"`
+	Secret  string   `xml:"secret,attr"`
+	Href    string   `xml:"href,attr"`
+	Role    string   `xml:"role,attr"`
+	Id      string   `xml:"id,attr"`
+	Contact string   `xml:"contact,attr"`
+}

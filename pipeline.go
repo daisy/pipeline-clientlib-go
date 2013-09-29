@@ -21,6 +21,7 @@ const (
 	API_RESULT     = "results"
 	API_LOG        = "log"
 	API_HALT       = "halt"
+	API_CLIENTS    = "clients"
 )
 
 //Error messages
@@ -50,6 +51,7 @@ var apiEntries = map[string]apiEntry{
 	API_JOBS:       apiEntry{"jobs", "GET", 200},
 	API_LOG:        apiEntry{"jobs/%v/log", "GET", 200},
 	API_HALT:       apiEntry{"admin/halt/%v", "GET", 204},
+	API_CLIENTS:    apiEntry{"admin/clients", "GET", 204},
 }
 
 //Default error handler has generic treatment for errors derived from the http status
@@ -294,6 +296,7 @@ func (p Pipeline) Log(id string) (data []byte, err error) {
 	return *(rd.Data), nil
 }
 
+//Admin api
 //Halts the ws
 func (p Pipeline) Halt(key string) error {
 	//override the client maker
@@ -301,3 +304,15 @@ func (p Pipeline) Halt(key string) error {
 	_, err := p.do(req, defaultErrorHandler())
 	return err
 }
+
+func (p Pipeline) Clients() (clients []Client, err error) {
+	clientsStr := Clients{}
+	req := p.newResquest(API_CLIENTS, &clientsStr, nil)
+	_, err = p.do(req, defaultErrorHandler())
+	if err != nil {
+		return
+	}
+	clients = clientsStr.Clients
+	return
+}
+
