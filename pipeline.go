@@ -1,12 +1,19 @@
 package pipeline
 
 import (
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/base64"
 	"encoding/xml"
 	"errors"
 	"fmt"
 	"github.com/capitancambio/restclient"
 	"io"
 	"log"
+	"math/rand"
+	"net/url"
+	"strings"
+	"time"
 )
 
 //Available api entry names
@@ -84,14 +91,43 @@ func errorHandler(handlers map[int]string) func(status int, respose restclient.R
 //Pipeline struct stores different configuration paramenters
 //for the communication with the pipeline framework
 type Pipeline struct {
-	BaseUrl     string      //baseurl of the framework
-	clientMaker func() doer //client to perform the rest queries
+	BaseUrl       string                                //baseurl of the framework
+	clientMaker   func() doer                           //client to perform the rest queries
+	authenticator func(req *restclient.RequestResponse) //authentication function
 }
 
 func NewPipeline(baseUrl string) *Pipeline {
 	return &Pipeline{
-		BaseUrl:     baseUrl,
-		clientMaker: newClient,
+		BaseUrl:       baseUrl,
+		authenticator: func(*restclient.RequestResponse) {},
+		clientMaker:   newClient,
+	}
+}
+
+func (p *Pipeline) SetCredentials(clientKey, clientSecret string) {
+	p.authenticator = authenticator(clientKey, clientSecret)
+}
+func authenticator(cKey, cSecret string) func(*restclient.RequestResponse) {
+	return func(r *restclient.RequestResponse) {
+		uri := r.Url
+		//timestamp = Time.now.utc.strftime('%Y-%m-%dT%H:%M:%SZ')
+		timestamp := time.Now().Format("2006-01-02T15:04:05Z")
+		//nonce = generate_nonce
+		nonce := fmt.Sprintf("%v", rand.Int63())
+		//rpadding with zeros
+		nonce = strings.Repeat("0", 30-len(nonce)) + nonce
+
+		authPart := fmt.Sprintf("authid=%v&time=%v&nonce=%v", cKey, timestamp, nonce)
+		charater := "?"
+		if strings.Contains(uri, "?") {
+			charater = "&"
+		}
+		uri = uri + charater + authPart
+		hasher := hmac.New(sha1.New, []byte(cSecret))
+		hasher.Write([]byte(uri))
+		hash := base64.StdEncoding.EncodeToString(hasher.Sum(nil))
+		hashSt := url.QueryEscape(hash)
+		r.Url = uri + "&sign=" + hashSt
 	}
 }
 
@@ -140,6 +176,7 @@ func (p Pipeline) newResquest(apiEntry string, targetPtr interface{}, postData i
 
 //Executes the request against the client
 func (p Pipeline) do(req *restclient.RequestResponse, handler func(int, restclient.RequestResponse) error) (status int, err error) {
+	p.authenticator(req)
 	status, err = p.clientMaker().Do(req)
 	if err != nil {
 		if err == restclient.UnexpectedStatus {
@@ -315,4 +352,3 @@ func (p Pipeline) Clients() (clients []Client, err error) {
 	clients = clientsStr.Clients
 	return
 }
-
