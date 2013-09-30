@@ -1,19 +1,10 @@
 package pipeline
 
 import (
-	"crypto/hmac"
-	"crypto/sha1"
-	"encoding/base64"
-	"encoding/xml"
-	"errors"
 	"fmt"
 	"github.com/capitancambio/restclient"
 	"io"
 	"log"
-	"math/rand"
-	"net/url"
-	"strings"
-	"time"
 )
 
 //Available api entry names
@@ -31,13 +22,6 @@ const (
 	API_CLIENTS    = "clients"
 )
 
-//Error messages
-const (
-	ERR_404     = "Resource not found %v"
-	ERR_401     = "You don't have enough permissions, check your configuration"
-	ERR_500     = "Server error: %v"
-	ERR_DEFAULT = "Framework server error (code: %v)"
-)
 
 //Defines the information for an api entry
 type apiEntry struct {
@@ -61,33 +45,6 @@ var apiEntries = map[string]apiEntry{
 	API_CLIENTS:    apiEntry{"admin/clients", "GET", 204},
 }
 
-//Default error handler has generic treatment for errors derived from the http status
-func defaultErrorHandler() func(status int, respose restclient.RequestResponse) error {
-	return errorHandler(make(map[int]string))
-}
-
-//Returns an error handler adding specific treatments to different status apart from the ones defined in the default
-func errorHandler(handlers map[int]string) func(status int, respose restclient.RequestResponse) error {
-	return func(status int, req restclient.RequestResponse) error {
-		if err, ok := handlers[status]; ok {
-			return errors.New(err)
-		}
-		switch status {
-		case 404:
-			return fmt.Errorf(ERR_404, req.Url)
-		case 401:
-			return errors.New(ERR_401)
-		case 500: //check response from the server
-			if req.Error.(*Error).Description != "" {
-				return fmt.Errorf(ERR_500, req.Error.(*Error).Description)
-			} else {
-				return fmt.Errorf(ERR_500, " from "+req.Url)
-			}
-		}
-		return fmt.Errorf(ERR_DEFAULT, status)
-	}
-}
-
 //Pipeline struct stores different configuration paramenters
 //for the communication with the pipeline framework
 type Pipeline struct {
@@ -106,89 +63,6 @@ func NewPipeline(baseUrl string) *Pipeline {
 
 func (p *Pipeline) SetCredentials(clientKey, clientSecret string) {
 	p.authenticator = authenticator(clientKey, clientSecret)
-}
-func authenticator(cKey, cSecret string) func(*restclient.RequestResponse) {
-	return func(r *restclient.RequestResponse) {
-		uri := r.Url
-		//timestamp = Time.now.utc.strftime('%Y-%m-%dT%H:%M:%SZ')
-		timestamp := time.Now().Format("2006-01-02T15:04:05Z")
-		//nonce = generate_nonce
-		nonce := fmt.Sprintf("%v", rand.Int63())
-		//rpadding with zeros
-		nonce = strings.Repeat("0", 30-len(nonce)) + nonce
-
-		authPart := fmt.Sprintf("authid=%v&time=%v&nonce=%v", cKey, timestamp, nonce)
-		charater := "?"
-		if strings.Contains(uri, "?") {
-			charater = "&"
-		}
-		uri = uri + charater + authPart
-		hasher := hmac.New(sha1.New, []byte(cSecret))
-		hasher.Write([]byte(uri))
-		hash := base64.StdEncoding.EncodeToString(hasher.Sum(nil))
-		hashSt := url.QueryEscape(hash)
-		r.Url = uri + "&sign=" + hashSt
-	}
-}
-
-//Convinience interface for testing
-type doer interface {
-	Do(*restclient.RequestResponse) (status int, err error)
-	SetDecoderSupplier(func(io.Reader) restclient.Decoder)
-	SetEncoderSupplier(func(io.Writer) restclient.Encoder)
-	SetContentType(string)
-}
-
-//Creates a new client setting the correct encoders
-func newClient() doer {
-	client := restclient.New()
-	client.EncoderSupplier = func(w io.Writer) restclient.Encoder {
-		return xml.NewEncoder(w)
-	}
-	client.DecoderSupplier = func(r io.Reader) restclient.Decoder {
-		return xml.NewDecoder(r)
-	}
-	return client
-}
-
-//Creates a new request object for the api entry and the target struct where the response for the sever will be decoded
-func (p Pipeline) newResquest(apiEntry string, targetPtr interface{}, postData interface{}, args ...interface{}) *restclient.RequestResponse {
-
-	if entry, ok := apiEntries[apiEntry]; ok {
-		url := p.BaseUrl + entry.urlPath
-		if len(args) > 0 {
-			url = fmt.Sprintf(url, args...)
-		}
-		r := &restclient.RequestResponse{
-			Url:            url,
-			Method:         entry.method,
-			Result:         targetPtr,
-			Error:          &Error{},
-			ExpectedStatus: entry.okStatus,
-			Data:           postData,
-		}
-
-		return r
-	} else {
-		panic(fmt.Sprintf("No api entry found for %v ", apiEntry))
-	}
-}
-
-//Executes the request against the client
-func (p Pipeline) do(req *restclient.RequestResponse, handler func(int, restclient.RequestResponse) error) (status int, err error) {
-	p.authenticator(req)
-	status, err = p.clientMaker().Do(req)
-	if err != nil {
-		if err == restclient.UnexpectedStatus {
-			err = handler(status, *req)
-		}
-		return
-	}
-	errStr := req.Error.(*Error).Description
-	if errStr != "" {
-		return status, fmt.Errorf("WS ERROR: %v", errStr)
-	}
-	return
 }
 
 //Returns a simple string representation of the Alive struct in the format:
@@ -214,19 +88,17 @@ func (p Pipeline) Scripts() (scripts Scripts, err error) {
 	return
 }
 
-//Returns a simple string representation of the Scripts struct in the format:
-//Scripts:[#href:value #size:value]
-func (s Scripts) String() string {
-	return fmt.Sprintf("Scripts:[#href:%v #size:%v]", s.Href, len(s.Scripts))
-}
-
 //Returns the list of available scripts
 func (p Pipeline) Script(id string) (script Script, err error) {
 	req := p.newResquest(API_SCRIPT, &script, nil, id)
 	_, err = p.do(req, errorHandler(map[int]string{404: "Script " + id + " not found"}))
 	return
 }
+
+//Returns the url for a given script id
 func (p Pipeline) ScriptUrl(id string) string {
+	//This should call the server, but it just would add more overhead
+	//so it's computed here
 	req := p.newResquest(API_SCRIPT, nil, nil, id)
 	return req.Url
 }
@@ -235,6 +107,7 @@ func (p Pipeline) ScriptUrl(id string) string {
 func multipartResultClientMaker(p Pipeline) func() doer {
 	return func() doer {
 		cli := p.clientMaker()
+		//change the default encodersuppier by the multipart
 		cli.SetEncoderSupplier(func(r io.Writer) restclient.Encoder {
 			return NewMultipartEncoder(r)
 		})
@@ -243,6 +116,7 @@ func multipartResultClientMaker(p Pipeline) func() doer {
 	}
 }
 
+//Specific multipart request
 func buildMultipartReq(jobReq JobRequest, data []byte) *MultipartData {
 	return &MultipartData{
 		data:    RawData{&data},
@@ -250,10 +124,11 @@ func buildMultipartReq(jobReq JobRequest, data []byte) *MultipartData {
 	}
 }
 
-//JobRequest
+//Sends a JobRequest to the server
 func (p Pipeline) JobRequest(newJob JobRequest, data []byte) (job Job, err error) {
 	var reqData interface{} = &newJob
 	log.Println("data len request ", len(data))
+	//check if we have data
 	if len(data) > 0 {
 		log.Println("Sending multipart job request")
 		p.clientMaker = multipartResultClientMaker(p)
@@ -268,6 +143,7 @@ func (p Pipeline) JobRequest(newJob JobRequest, data []byte) (job Job, err error
 	return
 }
 
+//Sends a Job query to the webservice
 func (p Pipeline) Job(id string, messageSequence int) (job Job, err error) {
 	req := p.newResquest(API_JOB, &job, nil, id, messageSequence)
 	_, err = p.do(req, errorHandler(map[int]string{
@@ -276,12 +152,14 @@ func (p Pipeline) Job(id string, messageSequence int) (job Job, err error) {
 	return
 }
 
+//Sends a request to the server in order to get all the jobs
 func (p Pipeline) Jobs() (jobs Jobs, err error) {
 	req := p.newResquest(API_JOBS, &jobs, nil)
 	_, err = p.do(req, defaultErrorHandler())
 	return
 }
 
+//Deletes a job
 func (p Pipeline) DeleteJob(id string) (ok bool, err error) {
 	req := p.newResquest(API_DEL_JOB, nil, nil, id)
 	_, err = p.do(req, errorHandler(map[int]string{
@@ -304,7 +182,7 @@ func resultClientMaker(p Pipeline) func() doer {
 	}
 }
 
-//return the results as an array of bytes
+//Returns the results of the job as an array of bytes
 func (p Pipeline) Results(id string) (data []byte, err error) {
 	//override the client maker
 	p.clientMaker = resultClientMaker(p)

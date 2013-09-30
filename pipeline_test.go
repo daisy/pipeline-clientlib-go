@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/capitancambio/restclient"
 	"io"
+	"strings"
 	"testing"
 )
 
@@ -170,7 +171,7 @@ func emptyClientMock() doer {
 	return &MockClient{status: 200, response: ""}
 }
 func createPipeline(maker func() doer) Pipeline {
-	return Pipeline{BaseUrl: "base/", clientMaker: maker}
+	return Pipeline{BaseUrl: "base/", clientMaker: maker, authenticator: func(*restclient.RequestResponse) {}}
 }
 
 //Actual tests
@@ -421,4 +422,25 @@ func TestJobs(t *testing.T) {
 		}
 	}
 
+}
+
+func TestAutheticator(t *testing.T) {
+	var alive Alive
+	r := Pipeline{}.newResquest(API_ALIVE, &alive, nil)
+	authenticator("cli", "shhh")(r)
+	url := r.Url
+	if !strings.Contains(url, "sign") {
+		t.Errorf("No sign in url %v", url)
+	}
+	if !strings.Contains(url, "time") {
+		t.Errorf("No time in url %v", url)
+	}
+
+	if !strings.Contains(url, "nonce") {
+		t.Errorf("No nonce in url %v", url)
+	}
+
+	if !strings.Contains(url, "authid") {
+		t.Errorf("No nonce in url %v", url)
+	}
 }
