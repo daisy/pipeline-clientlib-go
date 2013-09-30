@@ -9,19 +9,22 @@ import (
 
 //Available api entry names
 const (
-	API_ALIVE      = "alive"
-	API_SCRIPT     = "script"
-	API_SCRIPTS    = "scripts"
-	API_JOBREQUEST = "jobRequest"
-	API_JOB        = "job"
-	API_JOBS       = "jobs"
-	API_DEL_JOB    = "del_job"
-	API_RESULT     = "results"
-	API_LOG        = "log"
-	API_HALT       = "halt"
-	API_CLIENTS    = "clients"
+	API_ALIVE        = "alive"
+	API_SCRIPT       = "script"
+	API_SCRIPTS      = "scripts"
+	API_JOBREQUEST   = "jobRequest"
+	API_JOB          = "job"
+	API_JOBS         = "jobs"
+	API_DEL_JOB      = "del_job"
+	API_RESULT       = "results"
+	API_LOG          = "log"
+	API_HALT         = "halt"
+	API_CLIENTS      = "clients"
+	API_NEWCLIENT    = "new_client"
+	API_CLIENT       = "client"
+	API_DELETECLIENT = "delete_client"
+	API_MODIFYCLIENT = "modify_client"
 )
-
 
 //Defines the information for an api entry
 type apiEntry struct {
@@ -32,17 +35,21 @@ type apiEntry struct {
 
 //Available api entries
 var apiEntries = map[string]apiEntry{
-	API_ALIVE:      apiEntry{"alive", "GET", 200},
-	API_SCRIPTS:    apiEntry{"scripts", "GET", 200},
-	API_SCRIPT:     apiEntry{"scripts/%v", "GET", 200},
-	API_JOBREQUEST: apiEntry{"jobs", "POST", 201},
-	API_JOB:        apiEntry{"jobs/%v?msgSeq=%v", "GET", 200},
-	API_DEL_JOB:    apiEntry{"jobs/%v", "DELETE", 204},
-	API_RESULT:     apiEntry{"jobs/%v/result", "GET", 200},
-	API_JOBS:       apiEntry{"jobs", "GET", 200},
-	API_LOG:        apiEntry{"jobs/%v/log", "GET", 200},
-	API_HALT:       apiEntry{"admin/halt/%v", "GET", 204},
-	API_CLIENTS:    apiEntry{"admin/clients", "GET", 204},
+	API_ALIVE:        apiEntry{"alive", "GET", 200},
+	API_SCRIPTS:      apiEntry{"scripts", "GET", 200},
+	API_SCRIPT:       apiEntry{"scripts/%v", "GET", 200},
+	API_JOBREQUEST:   apiEntry{"jobs", "POST", 201},
+	API_JOB:          apiEntry{"jobs/%v?msgSeq=%v", "GET", 200},
+	API_DEL_JOB:      apiEntry{"jobs/%v", "DELETE", 204},
+	API_RESULT:       apiEntry{"jobs/%v/result", "GET", 200},
+	API_JOBS:         apiEntry{"jobs", "GET", 200},
+	API_LOG:          apiEntry{"jobs/%v/log", "GET", 200},
+	API_HALT:         apiEntry{"admin/halt/%v", "GET", 204},
+	API_CLIENTS:      apiEntry{"admin/clients", "GET", 200},
+	API_NEWCLIENT:    apiEntry{"admin/clients", "POST", 201},
+	API_CLIENT:       apiEntry{"admin/clients/%v", "GET", 200},
+	API_DELETECLIENT: apiEntry{"admin/clients/%v", "DELETE", 204},
+	API_MODIFYCLIENT: apiEntry{"admin/clients/%v", "PUT", 200},
 }
 
 //Pipeline struct stores different configuration paramenters
@@ -228,5 +235,40 @@ func (p Pipeline) Clients() (clients []Client, err error) {
 		return
 	}
 	clients = clientsStr.Clients
+	return
+}
+
+func (p Pipeline) NewClient(in Client) (out Client, err error) {
+	req := p.newResquest(API_NEWCLIENT, &out, &in)
+	_, err = p.do(req, errorHandler(map[int]string{
+		400: fmt.Sprintf("Client with id %v may already exist", in.Id),
+	}))
+	return
+}
+
+func (p Pipeline) Client(id string) (out Client, err error) {
+	req := p.newResquest(API_CLIENT, &out, nil, id)
+	_, err = p.do(req, errorHandler(map[int]string{
+		404: "Client with id " + id + " not found",
+	}))
+	return
+}
+
+func (p Pipeline) DeleteClient(id string) (ok bool, err error) {
+	req := p.newResquest(API_DELETECLIENT, nil, nil, id)
+	_, err = p.do(req, errorHandler(map[int]string{
+		404: "Client with id " + id + " not found",
+	}))
+	if err != nil {
+		ok = true
+	}
+	return
+}
+
+func (p Pipeline) ModifyClient(in Client, id string) (out Client, err error) {
+	req := p.newResquest(API_MODIFYCLIENT, &out, &in, id)
+	_, err = p.do(req, errorHandler(map[int]string{
+		404: "Client with id " + id + " not found",
+	}))
 	return
 }
