@@ -24,6 +24,7 @@ const (
 	API_CLIENT       = "client"
 	API_DELETECLIENT = "delete_client"
 	API_MODIFYCLIENT = "modify_client"
+	API_PROPERTIES   = "properties"
 )
 
 //Defines the information for an api entry
@@ -50,6 +51,7 @@ var apiEntries = map[string]apiEntry{
 	API_CLIENT:       apiEntry{"admin/clients/%v", "GET", 200},
 	API_DELETECLIENT: apiEntry{"admin/clients/%v", "DELETE", 204},
 	API_MODIFYCLIENT: apiEntry{"admin/clients/%v", "PUT", 200},
+	API_PROPERTIES:   apiEntry{"admin/properties", "GET", 200},
 }
 
 //Pipeline struct stores different configuration paramenters
@@ -271,4 +273,14 @@ func (p Pipeline) ModifyClient(in Client, id string) (out Client, err error) {
 		404: "Client with id " + id + " not found",
 	}))
 	return
+}
+
+func (p Pipeline) Properties() (out []Property, err error) {
+	props := Properties{}
+	req := p.newResquest(API_PROPERTIES, &props, nil)
+	_, err = p.do(req, defaultErrorHandler())
+	if err != nil {
+		return
+	}
+	return props.Properties, nil
 }

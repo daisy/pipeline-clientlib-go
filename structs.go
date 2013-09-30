@@ -133,10 +133,9 @@ type Jobs struct {
 }
 
 //Admin stuff
-//overwriting client
 type Clients struct {
 	XMLName xml.Name `xml:"http://www.daisy.org/ns/pipeline/data clients"`
-	Clients  []Client `xml:"http://www.daisy.org/ns/pipeline/data client"`
+	Clients []Client `xml:"http://www.daisy.org/ns/pipeline/data client"`
 	Href    string   `xml:"href,attr"`
 }
 type Client struct {
@@ -146,4 +145,17 @@ type Client struct {
 	Role    string   `xml:"role,attr"`
 	Id      string   `xml:"id,attr"`
 	Contact string   `xml:"contact,attr"`
+}
+type Property struct {
+	XMLName    xml.Name `xml:"http://www.daisy.org/ns/pipeline/data property"`
+	BundleName string   `xml:"bundleName,attr"`
+	BundleId   string   `xml:"bundleId,attr"`
+	Value      string   `xml:"value,attr"`
+	Name       string   `xml:"name,attr"`
+}
+
+type Properties struct {
+	XMLName    xml.Name   `xml:"http://www.daisy.org/ns/pipeline/data properties"`
+	Properties []Property `xml:"http://www.daisy.org/ns/pipeline/data property"`
+	Href       string     `xml:"href,attr"`
 }
