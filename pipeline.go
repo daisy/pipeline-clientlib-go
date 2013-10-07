@@ -74,6 +74,10 @@ func (p *Pipeline) SetCredentials(clientKey, clientSecret string) {
 	p.authenticator = authenticator(clientKey, clientSecret)
 }
 
+func (p *Pipeline) SetUrl(url string) {
+	p.BaseUrl = url
+}
+
 //Returns a simple string representation of the Alive struct in the format:
 //Alive:[#authentication:value #mode:value #version:value]
 func (a Alive) String() string {
