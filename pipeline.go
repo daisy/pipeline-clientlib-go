@@ -81,7 +81,7 @@ func (p *Pipeline) SetUrl(url string) {
 //Returns a simple string representation of the Alive struct in the format:
 //Alive:[#authentication:value #mode:value #version:value]
 func (a Alive) String() string {
-	return fmt.Sprintf("Alive:[#authentication:%v #mode:%v #version:%v]", a.Authentication, a.Mode, a.Version)
+	return fmt.Sprintf("Alive:[#authentication:%v #fsallow:%v #version:%v]", a.Authentication, a.FsAllow, a.Version)
 }
 
 //Calls the alive api entry
