@@ -18,7 +18,7 @@ type Error struct {
 type Alive struct {
 	XMLName        xml.Name `xml:"http://www.daisy.org/ns/pipeline/data alive"`
 	Authentication bool     `xml:"authentication,attr"` //Indicates if the framework is expecting authentication
-	FsAllow        bool     `xml:"fsallow,attr"`        //Mode of execution
+	FsAllow        bool     `xml:"localfs,attr"`        //Fwk allows access to the local fs
 	Version        string   `xml:"version,attr"`        //Version of the pipeline framework
 }
 
