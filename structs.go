@@ -159,3 +159,17 @@ type Properties struct {
 	Properties []Property `xml:"http://www.daisy.org/ns/pipeline/data property"`
 	Href       string     `xml:"href,attr"`
 }
+
+type JobSizes struct {
+	XMLName  xml.Name  `xml:"http://www.daisy.org/ns/pipeline/data jobSizes"`
+	JobSizes []JobSize `xml:"http://www.daisy.org/ns/pipeline/data jobSize"`
+	Href     string    `xml:"href,attr"`
+	Total    int       `xml:"total,attr"`
+}
+type JobSize struct {
+	XMLName xml.Name `xml:"http://www.daisy.org/ns/pipeline/data jobSize"`
+	Output  int      `xml:"output,attr"`
+	Id      string   `xml:"id,attr"`
+	Context int      `xml:"context,attr"`
+	Log     int      `xml:"log,attr"`
+}

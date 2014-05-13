@@ -25,6 +25,7 @@ const (
 	API_DELETECLIENT = "delete_client"
 	API_MODIFYCLIENT = "modify_client"
 	API_PROPERTIES   = "properties"
+	API_SIZE         = "size"
 )
 
 //Defines the information for an api entry
@@ -52,6 +53,7 @@ var apiEntries = map[string]apiEntry{
 	API_DELETECLIENT: apiEntry{"admin/clients/%v", "DELETE", 204},
 	API_MODIFYCLIENT: apiEntry{"admin/clients/%v", "PUT", 200},
 	API_PROPERTIES:   apiEntry{"admin/properties", "GET", 200},
+	API_SIZE:         apiEntry{"admin/sizes", "GET", 200},
 }
 
 //Pipeline struct stores different configuration paramenters
@@ -287,4 +289,14 @@ func (p Pipeline) Properties() (out []Property, err error) {
 		return
 	}
 	return props.Properties, nil
+}
+
+//Gets the jobs sizes
+func (p *Pipeline) Sizes() (sizes JobSizes, err error) {
+	req := p.newResquest(API_SIZE, &sizes, nil)
+	_, err = p.do(req, defaultErrorHandler())
+	if err != nil {
+		return
+	}
+	return sizes, nil
 }
