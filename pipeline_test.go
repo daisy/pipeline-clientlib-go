@@ -1,11 +1,7 @@
 package pipeline
 
 import (
-	"bytes"
-	"encoding/xml"
 	"fmt"
-	"github.com/capitancambio/restclient"
-	"io"
 	"strings"
 	"testing"
 )
@@ -102,169 +98,9 @@ var expected = map[string]interface{}{
 	},
 }
 
-type MockClient struct {
-	status          int
-	response        string
-	EncoderSupplier func(io.Writer) restclient.Encoder //Supplies the endoder objects
-	DecoderSupplier func(io.Reader) restclient.Decoder //Supplies the endoder objects
-	fail            bool
-}
-
-func (m *MockClient) SetDecoderSupplier(fn func(io.Reader) restclient.Decoder) {
-	m.DecoderSupplier = fn
-}
-func (m *MockClient) SetEncoderSupplier(fn func(io.Writer) restclient.Encoder) {
-	m.EncoderSupplier = fn
-}
-func (m *MockClient) SetContentType(string) {
-}
-func (m MockClient) Do(rr *restclient.RequestResponse) (status int, err error) {
-	if m.response != "" {
-		err = m.DecoderSupplier(bytes.NewBufferString(m.response)).Decode(rr.Result)
-	}
-	if m.fail {
-		err = m.DecoderSupplier(bytes.NewBufferString(errorXml)).Decode(rr.Error)
-		if err != nil {
-			println("THIS errorXml SHOULD NOT HAPPEN")
-			panic(err.Error())
-		}
-	}
-	return m.status, err
-}
-func clientMock(response string, status int) func() doer {
-
-	return func() doer {
-		return &MockClient{
-			status:   status,
-			response: response,
-			EncoderSupplier: func(w io.Writer) restclient.Encoder {
-				return xml.NewEncoder(w)
-			},
-			DecoderSupplier: func(r io.Reader) restclient.Decoder {
-				return xml.NewDecoder(r)
-			},
-			fail: false,
-		}
-	}
-
-}
-
-func failingMock() func() doer {
-
-	return func() doer {
-		return &MockClient{
-			status:   200,
-			response: "",
-			EncoderSupplier: func(w io.Writer) restclient.Encoder {
-				return xml.NewEncoder(w)
-			},
-			DecoderSupplier: func(r io.Reader) restclient.Decoder {
-				return xml.NewDecoder(r)
-			},
-			fail: true,
-		}
-	}
-
-}
-
-func emptyClientMock() doer {
-	return &MockClient{status: 200, response: ""}
-}
-func createPipeline(maker func() doer) Pipeline {
-	return Pipeline{BaseUrl: "base/", clientMaker: maker, authenticator: func(*restclient.RequestResponse) {}}
-}
-
 //Actual tests
-func TestDefaultErrorHandler(t *testing.T) {
-	var alive Alive
-	r := Pipeline{}.newResquest(API_ALIVE, &alive, nil)
-	err := defaultErrorHandler()(404, *r)
-
-	if err.Error() != fmt.Sprintf(ERR_404, apiEntries[API_ALIVE].urlPath) {
-		t.Error("Default 404 not handled")
-	}
-
-	err = defaultErrorHandler()(401, *r)
-	if err.Error() != ERR_401 {
-		t.Error("Default 401 not handled")
-	}
-
-	err = defaultErrorHandler()(500, *r)
-	if err.Error() != fmt.Sprintf(ERR_500, " from "+apiEntries[API_ALIVE].urlPath) {
-		t.Error("Default 500 not handled")
-	}
-
-	r.Error.(*Error).Description = "error"
-	err = defaultErrorHandler()(500, *r)
-	if err.Error() != fmt.Sprintf(ERR_500, "error") {
-		t.Error("Default 500 with desc not handled")
-	}
-	err = defaultErrorHandler()(501, *r)
-	if err.Error() != fmt.Sprintf(ERR_DEFAULT, 501) {
-		t.Error("Default 500 with desc not handled")
-	}
-}
-
-func TestCustomErrorHandler(t *testing.T) {
-	var alive Alive
-	r := Pipeline{}.newResquest(API_ALIVE, &alive, nil)
-	handler := errorHandler(map[int]string{404: "couldnt find it"})
-	err := handler(404, *r)
-	if err.Error() != "couldnt find it" {
-		t.Error("custom 404 not handled")
-	}
-}
-
-func TestNewRequestUnknownEntry(t *testing.T) {
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("Not panicked with unknown api entry")
-		}
-	}()
-	var alive Alive
-	Pipeline{}.newResquest("unknown", &alive, nil)
-
-}
-
-func TestNewRequestBaseUrl(t *testing.T) {
-	var alive Alive
-	r := Pipeline{BaseUrl: "google.com/"}.newResquest(API_ALIVE, &alive, nil)
-	if r.Url != "google.com/alive" {
-		t.Error("basePath not set")
-	}
-
-}
-
-func TestNewRequestPostData(t *testing.T) {
-	var alive Alive
-	r := Pipeline{BaseUrl: "google.com/"}.newResquest(API_ALIVE, &alive, "data")
-	if r.Data != "data" {
-		t.Error("post data not set")
-	}
-
-}
-
-//Alive
-func TestDoReq(t *testing.T) {
-	var alive Alive
-	pipeline := createPipeline(emptyClientMock)
-	r := pipeline.newResquest(API_ALIVE, &alive, nil)
-	if r.Url != "base/alive" {
-		t.Errorf("Alive path set to %v", r.Url)
-	}
-
-}
-
-func TestServerError(t *testing.T) {
-	cli := failingMock()
-	pipeline := createPipeline(cli)
-	_, err := pipeline.Alive()
-	if err == nil {
-		t.Errorf("Exepecte error not thrown")
-	}
-}
 func TestAlive(t *testing.T) {
-	pipeline := createPipeline(clientMock(aliveXml, 200))
+	pipeline := createPipeline(xmlClientMock(aliveXml, 200))
 	alive, err := pipeline.Alive()
 	if err != nil {
 		t.Errorf("Error not nil %v", err)
@@ -286,7 +122,7 @@ func TestReqScripts(t *testing.T) {
 }
 
 func TestScripts(t *testing.T) {
-	pipeline := createPipeline(clientMock(scriptsXml, 200))
+	pipeline := createPipeline(xmlClientMock(scriptsXml, 200))
 	res, err := pipeline.Scripts()
 	if err != nil {
 		t.Errorf("Error not nil %v", err)
@@ -311,7 +147,7 @@ func TestReqScript(t *testing.T) {
 }
 
 func TestScript(t *testing.T) {
-	pipeline := createPipeline(clientMock(scriptXml, 200))
+	pipeline := createPipeline(xmlClientMock(scriptXml, 200))
 	res, err := pipeline.Script("test")
 	if err != nil {
 		t.Errorf("Error not nil %v", err)
@@ -334,7 +170,7 @@ func TestScript(t *testing.T) {
 	}
 }
 func TestJobReq(t *testing.T) {
-	pipeline := createPipeline(clientMock(jobCreationOk, 201))
+	pipeline := createPipeline(xmlClientMock(jobCreationOk, 201))
 	res, err := pipeline.JobRequest(expected[API_JOBREQUEST].(JobRequest), nil)
 	if err != nil {
 		t.Errorf("Error not nil %v", err)
@@ -344,7 +180,7 @@ func TestJobReq(t *testing.T) {
 	}
 }
 func TestJobReqMultipart(t *testing.T) {
-	pipeline := createPipeline(clientMock(jobCreationOk, 201))
+	pipeline := createPipeline(xmlClientMock(jobCreationOk, 201))
 	data := []byte("data")
 	res, err := pipeline.JobRequest(expected[API_JOBREQUEST].(JobRequest), data)
 	if err != nil {
@@ -356,7 +192,7 @@ func TestJobReqMultipart(t *testing.T) {
 }
 
 func TestScriptUrl(t *testing.T) {
-	pipeline := createPipeline(clientMock("", 0))
+	pipeline := createPipeline(xmlClientMock("", 0))
 	url := pipeline.ScriptUrl("unpalo")
 	if url != "base/scripts/unpalo" {
 		t.Errorf("Script url \nexpected %v \nresult %v", "base/scripts/unpalo", url)
@@ -364,7 +200,7 @@ func TestScriptUrl(t *testing.T) {
 }
 
 func TestJob(t *testing.T) {
-	pipeline := createPipeline(clientMock(jobStatus, 200))
+	pipeline := createPipeline(xmlClientMock(jobStatus, 200))
 	res, err := pipeline.Job("jobId", 0)
 	expJob := expected[API_JOB].(Job)
 	if err != nil {
@@ -394,7 +230,7 @@ func TestJob(t *testing.T) {
 
 func TestResults(t *testing.T) {
 	msg := "learn to swim"
-	pipeline := createPipeline(clientMock(msg, 200))
+	pipeline := createPipeline(xmlClientMock(msg, 200))
 	data, err := pipeline.Results("id")
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
@@ -406,7 +242,7 @@ func TestResults(t *testing.T) {
 }
 
 func TestJobs(t *testing.T) {
-	pipeline := createPipeline(clientMock(jobsXml, 200))
+	pipeline := createPipeline(xmlClientMock(jobsXml, 200))
 	res, err := pipeline.Jobs()
 	idTemp := "job-id-0%v"
 	if err != nil {
@@ -443,4 +279,26 @@ func TestAutheticator(t *testing.T) {
 	if !strings.Contains(url, "authid") {
 		t.Errorf("No nonce in url %v", url)
 	}
+}
+
+func TestClient(t *testing.T) {
+	client := Client{Id: "id"}
+	pipeline := createPipeline(structClientMock(client, 200))
+	cout, err := pipeline.Client("myclient!")
+	if err != nil {
+		t.Errorf("Client returned error but should be ok")
+	}
+	if cout.Id != "id" {
+		t.Errorf("The returned id is not 'id' %v", cout.Id)
+	}
+
+}
+func TestClientNotFound(t *testing.T) {
+	client := Client{Id: "id"}
+	pipeline := createPipeline(structClientMock(client, 404))
+	_, err := pipeline.Client("that one, you know...")
+	if err == nil {
+		t.Errorf("Not found should have been thrown")
+	}
+
 }
