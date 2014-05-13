@@ -7,12 +7,13 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/capitancambio/restclient"
 	"io"
 	"math/rand"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/capitancambio/restclient"
 )
 
 //Error messages
@@ -49,6 +50,7 @@ func errorHandler(handlers map[int]string) func(status int, respose restclient.R
 		return fmt.Errorf(ERR_DEFAULT, status)
 	}
 }
+
 //Adds the extra info + hash needed by the server
 func authenticator(cKey, cSecret string) func(*restclient.RequestResponse) {
 	return func(r *restclient.RequestResponse) {

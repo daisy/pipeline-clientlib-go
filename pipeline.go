@@ -2,9 +2,10 @@ package pipeline
 
 import (
 	"fmt"
-	"github.com/capitancambio/restclient"
 	"io"
 	"log"
+
+	"github.com/capitancambio/restclient"
 )
 
 //Available api entry names
