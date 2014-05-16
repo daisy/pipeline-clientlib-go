@@ -27,6 +27,7 @@ const (
 	API_MODIFYCLIENT = "modify_client"
 	API_PROPERTIES   = "properties"
 	API_SIZE         = "size"
+	API_QUEUE        = "queue"
 )
 
 //Defines the information for an api entry
@@ -55,6 +56,7 @@ var apiEntries = map[string]apiEntry{
 	API_MODIFYCLIENT: apiEntry{"admin/clients/%v", "PUT", 200},
 	API_PROPERTIES:   apiEntry{"admin/properties", "GET", 200},
 	API_SIZE:         apiEntry{"admin/sizes", "GET", 200},
+	API_QUEUE:        apiEntry{"admin/queue", "GET", 200},
 }
 
 //Pipeline struct stores different configuration paramenters
@@ -306,4 +308,16 @@ func (p *Pipeline) Sizes() (sizes JobSizes, err error) {
 		return
 	}
 	return sizes, nil
+}
+
+//Gets execution queue
+func (p *Pipeline) Queue() (jobs []QueueJob, err error) {
+	queue := Queue{}
+	req := p.newResquest(API_SIZE, &queue, nil)
+	_, err = p.do(req, defaultErrorHandler())
+	if err != nil {
+		return
+	}
+	jobs = queue.Jobs
+	return jobs, nil
 }

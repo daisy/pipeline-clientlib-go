@@ -515,3 +515,29 @@ func TestSizesError(t *testing.T) {
 	}
 
 }
+
+func TestQueue(t *testing.T) {
+	queue := Queue{
+		Jobs: []QueueJob{
+			QueueJob{Id: "job1", JobPriority: "high"},
+			QueueJob{Id: "job2", JobPriority: "high"},
+		},
+	}
+	pipeline := createPipeline(structClientMock(queue, 200))
+	res, err := pipeline.Queue()
+	if err != nil {
+		t.Errorf("Unexpected error %#v", err)
+	}
+	if len(res) != 2 {
+		t.Errorf("I didn't get my two jobs 2!= %d", len(res))
+	}
+
+}
+
+func TestQueueError(t *testing.T) {
+	pipeline := createPipeline(failingMock())
+	_, err := pipeline.Queue()
+	if err == nil {
+		t.Errorf("Expected error didn't happen")
+	}
+}

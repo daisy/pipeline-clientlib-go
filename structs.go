@@ -173,3 +173,20 @@ type JobSize struct {
 	Context int      `xml:"context,attr"`
 	Log     int      `xml:"log,attr"`
 }
+type Queue struct {
+	XMLName xml.Name   `xml:"http://www.daisy.org/ns/pipeline/data queue"`
+	Jobs    []QueueJob `xml:"http://www.daisy.org/ns/pipeline/data job"`
+	Href    string     `xml:"href,attr"`
+}
+type QueueJob struct {
+	XMLName          xml.Name `xml:"http://www.daisy.org/ns/pipeline/data job"`
+	Moveup           string   `xml:"moveUp,attr"`
+	Id               string   `xml:"id,attr"`
+	ClientPriority   string   `xml:"clientPriority,attr"`
+	RelativeTime     string   `xml:"relativeTime,attr"`
+	JobPriority      string   `xml:"jobPriority,attr"`
+	Href             string   `xml:"href,attr"`
+	TimeStamp        int64    `xml:"timestamp,attr"`
+	MoveDown         string   `xml:"moveDown,attr"`
+	ComputedPriority float64  `xml:"computedPriority,attr"`
+}
