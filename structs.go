@@ -183,7 +183,7 @@ type QueueJob struct {
 	Moveup           string   `xml:"moveUp,attr"`
 	Id               string   `xml:"id,attr"`
 	ClientPriority   string   `xml:"clientPriority,attr"`
-	RelativeTime     string   `xml:"relativeTime,attr"`
+	RelativeTime     float64  `xml:"relativeTime,attr"`
 	JobPriority      string   `xml:"jobPriority,attr"`
 	Href             string   `xml:"href,attr"`
 	TimeStamp        int64    `xml:"timestamp,attr"`
