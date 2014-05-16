@@ -236,6 +236,7 @@ func (p Pipeline) Halt(key string) error {
 	return err
 }
 
+//Returns the list of clients
 func (p Pipeline) Clients() (clients []Client, err error) {
 	clientsStr := Clients{}
 	req := p.newResquest(API_CLIENTS, &clientsStr, nil)
@@ -247,6 +248,7 @@ func (p Pipeline) Clients() (clients []Client, err error) {
 	return
 }
 
+//Creates a new client
 func (p Pipeline) NewClient(in Client) (out Client, err error) {
 	req := p.newResquest(API_NEWCLIENT, &out, &in)
 	_, err = p.do(req, errorHandler(map[int]string{
@@ -255,6 +257,7 @@ func (p Pipeline) NewClient(in Client) (out Client, err error) {
 	return
 }
 
+//Retrieves a client using the its id
 func (p Pipeline) Client(id string) (out Client, err error) {
 	req := p.newResquest(API_CLIENT, &out, nil, id)
 	_, err = p.do(req, errorHandler(map[int]string{
@@ -263,17 +266,19 @@ func (p Pipeline) Client(id string) (out Client, err error) {
 	return
 }
 
+//Deletes a client
 func (p Pipeline) DeleteClient(id string) (ok bool, err error) {
 	req := p.newResquest(API_DELETECLIENT, nil, nil, id)
 	_, err = p.do(req, errorHandler(map[int]string{
 		404: "Client with id " + id + " not found",
 	}))
-	if err != nil {
+	if err == nil {
 		ok = true
 	}
 	return
 }
 
+//Modifies a client with the new data TODO:include the id in the client structure
 func (p Pipeline) ModifyClient(in Client, id string) (out Client, err error) {
 	req := p.newResquest(API_MODIFYCLIENT, &out, &in, id)
 	_, err = p.do(req, errorHandler(map[int]string{
@@ -282,6 +287,7 @@ func (p Pipeline) ModifyClient(in Client, id string) (out Client, err error) {
 	return
 }
 
+//Retrieves the list of different properties which describes the framework configuration
 func (p Pipeline) Properties() (out []Property, err error) {
 	props := Properties{}
 	req := p.newResquest(API_PROPERTIES, &props, nil)
@@ -292,7 +298,7 @@ func (p Pipeline) Properties() (out []Property, err error) {
 	return props.Properties, nil
 }
 
-//Gets the jobs sizes
+//Gets the physical size of the jobs
 func (p *Pipeline) Sizes() (sizes JobSizes, err error) {
 	req := p.newResquest(API_SIZE, &sizes, nil)
 	_, err = p.do(req, defaultErrorHandler())

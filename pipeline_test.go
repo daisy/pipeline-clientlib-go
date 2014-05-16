@@ -260,6 +260,37 @@ func TestJobs(t *testing.T) {
 
 }
 
+func TestResultsNotFound(t *testing.T) {
+	pipeline := createPipeline(structClientMock(true, 404))
+	_, err := pipeline.Results("non existing")
+	if err == nil {
+		t.Errorf("Expected error not thrown")
+	}
+}
+
+func TestDeleteJob(t *testing.T) {
+	pipeline := createPipeline(structClientMock(true, 204))
+	ok, err := pipeline.DeleteJob("job1")
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if !ok {
+		t.Errorf("Job was not deleted")
+	}
+
+}
+func TestDeleteJobError(t *testing.T) {
+	pipeline := createPipeline(structClientMock(true, 404))
+	ok, err := pipeline.DeleteJob("job1")
+	if err == nil {
+		t.Errorf("Expected error not thrown")
+	}
+	if ok {
+		t.Errorf("ok should be false")
+	}
+
+}
+
 func TestAutheticator(t *testing.T) {
 	var alive Alive
 	r := Pipeline{}.newResquest(API_ALIVE, &alive, nil)
@@ -281,6 +312,63 @@ func TestAutheticator(t *testing.T) {
 	}
 }
 
+func TestLog(t *testing.T) {
+	log := "This is my log"
+	pipeline := createPipeline(xmlClientMock(log, 200))
+	cout, err := pipeline.Log("id1")
+	if err != nil {
+		t.Errorf("NewClient returned error but should be ok")
+	}
+	if string(cout) != log {
+		t.Errorf("The returned log is not '%s' %s", log, string(cout))
+	}
+}
+func TestLogNotFound(t *testing.T) {
+	log := "This is my log"
+	pipeline := createPipeline(xmlClientMock(log, 404))
+	_, err := pipeline.Log("id1")
+	if err == nil {
+		t.Errorf("Expected error not thrown")
+	}
+}
+
+func TestHalt(t *testing.T) {
+	pipeline := createPipeline(structClientMock(true, 204))
+	err := pipeline.Halt("mykey")
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+
+}
+
+func TestHaltError(t *testing.T) {
+	pipeline := createPipeline(structClientMock(true, 500))
+	err := pipeline.Halt("mykey")
+	if err == nil {
+		t.Errorf("Expected error not thrown")
+	}
+}
+func TestNewClient(t *testing.T) {
+	client := Client{Id: "id"}
+	pipeline := createPipeline(structClientMock(client, 201))
+	cout, err := pipeline.NewClient(client)
+	if err != nil {
+		t.Errorf("NewClient returned error but should be ok")
+	}
+	if cout.Id != "id" {
+		t.Errorf("The returned id is not 'id' %v", cout.Id)
+	}
+}
+func TestClientExists(t *testing.T) {
+	client := Client{Id: "id"}
+	pipeline := createPipeline(structClientMock(client, 400))
+	_, err := pipeline.NewClient(client)
+	if err == nil {
+		t.Errorf("The client is already there but I got no error")
+	}
+
+}
+
 func TestClient(t *testing.T) {
 	client := Client{Id: "id"}
 	pipeline := createPipeline(structClientMock(client, 200))
@@ -299,6 +387,131 @@ func TestClientNotFound(t *testing.T) {
 	_, err := pipeline.Client("that one, you know...")
 	if err == nil {
 		t.Errorf("Not found should have been thrown")
+	}
+
+}
+
+func TestClients(t *testing.T) {
+	clients := Clients{Clients: []Client{Client{Id: "1"}, Client{Id: "2"}}}
+	pipeline := createPipeline(structClientMock(clients, 200))
+	result, err := pipeline.Clients()
+	if err != nil {
+		t.Errorf("Clients returned error but should be ok")
+	}
+	if len(result) != 2 {
+		t.Errorf("The returned client size is wrong 2!=%d", len(result))
+	}
+
+}
+func TestClientsError(t *testing.T) {
+	clients := Clients{Clients: []Client{Client{Id: "1"}, Client{Id: "2"}}}
+	pipeline := createPipeline(structClientMock(clients, 500))
+	_, err := pipeline.Clients()
+	if err == nil {
+		t.Errorf("Expected error not thrown")
+	}
+
+}
+func TestDeleteClient(t *testing.T) {
+	pipeline := createPipeline(structClientMock("", 204))
+	ok, err := pipeline.DeleteClient("myclient!")
+	if err != nil {
+		t.Errorf("DeleteClient returned error but should be ok %#v", err)
+	}
+	if !ok {
+		t.Errorf("Client deletion went wrong")
+	}
+
+}
+
+func TestDeleteClientNotFound(t *testing.T) {
+
+	pipeline := createPipeline(structClientMock("", 404))
+	ok, err := pipeline.DeleteClient("that one, you know...")
+	if err == nil {
+		t.Errorf("Not found should have been thrown")
+	}
+	if ok {
+		t.Errorf("Client deletion went wrong ... as expected")
+	}
+
+}
+
+func TestModifyClient(t *testing.T) {
+	client := Client{Id: "id", Secret: "other"}
+	pipeline := createPipeline(structClientMock(client, 200))
+	cout, err := pipeline.ModifyClient(client, "myclient!")
+	if err != nil {
+		t.Errorf("Client returned error but should be ok")
+	}
+	if cout.Id != "id" {
+		t.Errorf("The returned id is not 'id' %v", cout.Id)
+	}
+
+}
+func TestModifyClientNotFound(t *testing.T) {
+	client := Client{Id: "id"}
+	pipeline := createPipeline(structClientMock(client, 404))
+	_, err := pipeline.ModifyClient(client, "that one, you know...")
+	if err == nil {
+		t.Errorf("Not found should have been thrown")
+	}
+}
+
+func TestProperties(t *testing.T) {
+	props := Properties{
+		Properties: []Property{
+			Property{Name: "prop1", Value: "ok"},
+			Property{Name: "prop2", Value: "other"},
+		},
+	}
+	pipeline := createPipeline(structClientMock(props, 200))
+	res, err := pipeline.Properties()
+	if err != nil {
+		t.Errorf("Unexpected error %#v", err)
+	}
+	if len(res) != 2 {
+		t.Errorf("I didn't get my two properties 2!= %d", len(res))
+	}
+
+}
+
+func TestPropertiesError(t *testing.T) {
+	pipeline := createPipeline(failingMock())
+	_, err := pipeline.Properties()
+	if err == nil {
+		t.Errorf("Expected error didn't happen")
+	}
+
+}
+
+func TestSizes(t *testing.T) {
+	sizes := JobSizes{
+		JobSizes: []JobSize{
+			JobSize{Id: "job1", Context: 100},
+			JobSize{Id: "job2", Context: 100},
+		},
+		Total: 200,
+	}
+	pipeline := createPipeline(structClientMock(sizes, 200))
+	res, err := pipeline.Sizes()
+	if err != nil {
+		t.Errorf("Unexpected error %#v", err)
+	}
+	if len(res.JobSizes) != 2 {
+		t.Errorf("I didn't get my two sizes 2!= %d", len(res.JobSizes))
+	}
+	if res.Total != 200 {
+		t.Errorf("Total is wrong 200!=%#v", res.Total)
+	}
+
+}
+
+func TestSizesError(t *testing.T) {
+	pipeline := createPipeline(failingMock())
+	_, err := pipeline.Sizes()
+	if err == nil {
+		t.Errorf("Expected error didn't happen")
 	}
 
 }

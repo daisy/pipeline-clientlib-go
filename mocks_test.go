@@ -86,8 +86,10 @@ func (m MockEncoderDecoder) Encode(value interface{}) error {
 
 //Hydrates the value with the provided response
 func (m MockEncoderDecoder) Decode(value interface{}) error {
-	v := reflect.ValueOf(value)
-	v.Elem().Set(reflect.ValueOf(m.response))
+	if value != nil {
+		v := reflect.ValueOf(value)
+		v.Elem().Set(reflect.ValueOf(m.response))
+	}
 	return nil
 }
 
