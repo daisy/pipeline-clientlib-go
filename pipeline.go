@@ -28,6 +28,8 @@ const (
 	API_PROPERTIES   = "properties"
 	API_SIZE         = "size"
 	API_QUEUE        = "queue"
+	API_MOVE_UP      = "move_up"
+	API_MOVE_DOWN    = "move_down"
 )
 
 //Defines the information for an api entry
@@ -48,6 +50,8 @@ var apiEntries = map[string]apiEntry{
 	API_RESULT:       apiEntry{"jobs/%v/result", "GET", 200},
 	API_JOBS:         apiEntry{"jobs", "GET", 200},
 	API_QUEUE:        apiEntry{"queue", "GET", 200},
+	API_MOVE_UP:      apiEntry{"queue/up/%v", "GET", 200},
+	API_MOVE_DOWN:    apiEntry{"queue/down/%v", "GET", 200},
 	API_LOG:          apiEntry{"jobs/%v/log", "GET", 200},
 	API_HALT:         apiEntry{"admin/halt/%v", "GET", 204},
 	API_CLIENTS:      apiEntry{"admin/clients", "GET", 200},
@@ -314,6 +318,28 @@ func (p *Pipeline) Sizes() (sizes JobSizes, err error) {
 func (p *Pipeline) Queue() (jobs []QueueJob, err error) {
 	queue := Queue{}
 	req := p.newResquest(API_QUEUE, &queue, nil)
+	_, err = p.do(req, defaultErrorHandler())
+	if err != nil {
+		return
+	}
+	jobs = queue.Jobs
+	return jobs, nil
+}
+
+func (p *Pipeline) MoveUp(jobId string) (jobs []QueueJob, err error) {
+	queue := Queue{}
+	req := p.newResquest(API_MOVE_UP, &queue, nil, jobId)
+	_, err = p.do(req, defaultErrorHandler())
+	if err != nil {
+		return
+	}
+	jobs = queue.Jobs
+	return jobs, nil
+}
+
+func (p *Pipeline) MoveDown(jobId string) (jobs []QueueJob, err error) {
+	queue := Queue{}
+	req := p.newResquest(API_MOVE_DOWN, &queue, nil, jobId)
 	_, err = p.do(req, defaultErrorHandler())
 	if err != nil {
 		return

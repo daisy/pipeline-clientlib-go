@@ -541,3 +541,64 @@ func TestQueueError(t *testing.T) {
 		t.Errorf("Expected error didn't happen")
 	}
 }
+func TestMoveUp(t *testing.T) {
+	queue := Queue{
+		Jobs: []QueueJob{
+			QueueJob{Id: "job1", JobPriority: "high"},
+			QueueJob{Id: "job2", JobPriority: "high"},
+		},
+	}
+	pipeline := createPipeline(structClientMock(queue, 200))
+	res, err := pipeline.MoveUp("id")
+	if err != nil {
+		t.Errorf("Unexpected error %#v", err)
+	}
+	if len(res) != 2 {
+		t.Errorf("I didn't get my two jobs 2!= %d", len(res))
+	}
+
+}
+func TestMoveUpNotFound(t *testing.T) {
+	queue := Queue{
+		Jobs: []QueueJob{
+			QueueJob{Id: "job1", JobPriority: "high"},
+			QueueJob{Id: "job2", JobPriority: "high"},
+		},
+	}
+	pipeline := createPipeline(structClientMock(queue, 404))
+	_, err := pipeline.MoveUp("bad id")
+	if err == nil {
+		t.Errorf("Expected error not thrown")
+	}
+}
+
+func TestMoveDown(t *testing.T) {
+	queue := Queue{
+		Jobs: []QueueJob{
+			QueueJob{Id: "job1", JobPriority: "high"},
+			QueueJob{Id: "job2", JobPriority: "high"},
+		},
+	}
+	pipeline := createPipeline(structClientMock(queue, 200))
+	res, err := pipeline.MoveDown("id")
+	if err != nil {
+		t.Errorf("Unexpected error %#v", err)
+	}
+	if len(res) != 2 {
+		t.Errorf("I didn't get my two jobs 2!= %d", len(res))
+	}
+
+}
+func TestMoveDownNotFound(t *testing.T) {
+	queue := Queue{
+		Jobs: []QueueJob{
+			QueueJob{Id: "job1", JobPriority: "high"},
+			QueueJob{Id: "job2", JobPriority: "high"},
+		},
+	}
+	pipeline := createPipeline(structClientMock(queue, 404))
+	_, err := pipeline.MoveDown("bad id")
+	if err == nil {
+		t.Errorf("Expected error not thrown")
+	}
+}
