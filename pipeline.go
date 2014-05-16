@@ -47,6 +47,7 @@ var apiEntries = map[string]apiEntry{
 	API_DEL_JOB:      apiEntry{"jobs/%v", "DELETE", 204},
 	API_RESULT:       apiEntry{"jobs/%v/result", "GET", 200},
 	API_JOBS:         apiEntry{"jobs", "GET", 200},
+	API_QUEUE:        apiEntry{"queue", "GET", 200},
 	API_LOG:          apiEntry{"jobs/%v/log", "GET", 200},
 	API_HALT:         apiEntry{"admin/halt/%v", "GET", 204},
 	API_CLIENTS:      apiEntry{"admin/clients", "GET", 200},
@@ -56,7 +57,6 @@ var apiEntries = map[string]apiEntry{
 	API_MODIFYCLIENT: apiEntry{"admin/clients/%v", "PUT", 200},
 	API_PROPERTIES:   apiEntry{"admin/properties", "GET", 200},
 	API_SIZE:         apiEntry{"admin/sizes", "GET", 200},
-	API_QUEUE:        apiEntry{"admin/queue", "GET", 200},
 }
 
 //Pipeline struct stores different configuration paramenters
@@ -313,7 +313,7 @@ func (p *Pipeline) Sizes() (sizes JobSizes, err error) {
 //Gets execution queue
 func (p *Pipeline) Queue() (jobs []QueueJob, err error) {
 	queue := Queue{}
-	req := p.newResquest(API_SIZE, &queue, nil)
+	req := p.newResquest(API_QUEUE, &queue, nil)
 	_, err = p.do(req, defaultErrorHandler())
 	if err != nil {
 		return

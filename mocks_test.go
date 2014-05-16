@@ -16,6 +16,7 @@ type MockClient struct {
 	EncoderSupplier func(io.Writer) restclient.Encoder //Supplies the endoder objects
 	DecoderSupplier func(io.Reader) restclient.Decoder //Supplies the endoder objects
 	fail            bool
+	request         restclient.RequestResponse
 }
 
 //Sets the decoder supplier - convey the interface
@@ -33,7 +34,8 @@ func (m *MockClient) SetContentType(string) {
 }
 
 //Moked Do just encodes the request and decodes response and complains about the unexpected statuses
-func (m MockClient) Do(rr *restclient.RequestResponse) (status int, err error) {
+func (m *MockClient) Do(rr *restclient.RequestResponse) (status int, err error) {
+	m.request = *rr
 	if m.response != "" {
 		err = m.DecoderSupplier(bytes.NewBufferString(m.response)).Decode(rr.Result)
 	}
