@@ -1,7 +1,7 @@
 Pipeline 2 - Golang Client Library
 -----------------
 
-[![Build Status](https://travis-ci.org/daisy-consortium/pipeline-clientlib-go.png?branch=master)](https://travis-ci.org/daisy-consortium/pipeline-clientlib-go)
+[![Build Status](https://travis-ci.org/daisy/pipeline-clientlib-go.png?branch=master)](https://travis-ci.org/daisy/pipeline-clientlib-go) [![Coverage Status](https://coveralls.io/repos/daisy/pipeline-clientlib-go/badge.png?branch=master)](https://coveralls.io/r/daisy/pipeline-clientlib-go?branch=master)
 
 This project provides a Go library for communicating with the DAISY Pipeline 2 Web Service.
 
