@@ -305,7 +305,7 @@ func (p Pipeline) Properties() (out []Property, err error) {
 }
 
 //Gets the physical size of the jobs
-func (p *Pipeline) Sizes() (sizes JobSizes, err error) {
+func (p Pipeline) Sizes() (sizes JobSizes, err error) {
 	req := p.newResquest(API_SIZE, &sizes, nil)
 	_, err = p.do(req, defaultErrorHandler())
 	if err != nil {
@@ -315,7 +315,7 @@ func (p *Pipeline) Sizes() (sizes JobSizes, err error) {
 }
 
 //Gets execution queue
-func (p *Pipeline) Queue() (jobs []QueueJob, err error) {
+func (p Pipeline) Queue() (jobs []QueueJob, err error) {
 	queue := Queue{}
 	req := p.newResquest(API_QUEUE, &queue, nil)
 	_, err = p.do(req, defaultErrorHandler())
@@ -326,7 +326,7 @@ func (p *Pipeline) Queue() (jobs []QueueJob, err error) {
 	return jobs, nil
 }
 
-func (p *Pipeline) MoveUp(jobId string) (jobs []QueueJob, err error) {
+func (p Pipeline) MoveUp(jobId string) (jobs []QueueJob, err error) {
 	queue := Queue{}
 	req := p.newResquest(API_MOVE_UP, &queue, nil, jobId)
 	_, err = p.do(req, defaultErrorHandler())
@@ -337,7 +337,7 @@ func (p *Pipeline) MoveUp(jobId string) (jobs []QueueJob, err error) {
 	return jobs, nil
 }
 
-func (p *Pipeline) MoveDown(jobId string) (jobs []QueueJob, err error) {
+func (p Pipeline) MoveDown(jobId string) (jobs []QueueJob, err error) {
 	queue := Queue{}
 	req := p.newResquest(API_MOVE_DOWN, &queue, nil, jobId)
 	_, err = p.do(req, defaultErrorHandler())
