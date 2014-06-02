@@ -82,6 +82,7 @@ type Callback struct {
 type JobRequest struct {
 	XMLName  xml.Name   `xml:"http://www.daisy.org/ns/pipeline/data jobRequest"`
 	Nicename string     `xml:"http://www.daisy.org/ns/pipeline/data nicename,omitempty"`
+	Priority string     `xml:"http://www.daisy.org/ns/pipeline/data priority,omitempty"`
 	Script   Script     `xml:"http://www.daisy.org/ns/pipeline/data script"`
 	Inputs   []Input    `xml:"http://www.daisy.org/ns/pipeline/data input,omitempty"`
 	Options  []Option   `xml:"http://www.daisy.org/ns/pipeline/data option,omitempty"`
@@ -95,6 +96,7 @@ type Job struct {
 	Messages []Message `xml:"http://www.daisy.org/ns/pipeline/data messages>message"`
 	Log      Log       `xml:"http://www.daisy.org/ns/pipeline/data log"`
 	Results  Results   `xml:"http://www.daisy.org/ns/pipeline/data results"`
+	Priority string    `xml:"priority,attr"`
 	Status   string    `xml:"status,attr"`
 	Href     string    `xml:"href,attr"`
 	Id       string    `xml:"id,attr"`
@@ -139,12 +141,13 @@ type Clients struct {
 	Href    string   `xml:"href,attr"`
 }
 type Client struct {
-	XMLName xml.Name `xml:"http://www.daisy.org/ns/pipeline/data client"`
-	Secret  string   `xml:"secret,attr"`
-	Href    string   `xml:"href,attr"`
-	Role    string   `xml:"role,attr"`
-	Id      string   `xml:"id,attr"`
-	Contact string   `xml:"contact,attr"`
+	XMLName  xml.Name `xml:"http://www.daisy.org/ns/pipeline/data client"`
+	Secret   string   `xml:"secret,attr"`
+	Href     string   `xml:"href,attr"`
+	Role     string   `xml:"role,attr"`
+	Id       string   `xml:"id,attr"`
+	Contact  string   `xml:"contact,attr"`
+	Priority string   `xml:"priority,attr"`
 }
 type Property struct {
 	XMLName    xml.Name `xml:"http://www.daisy.org/ns/pipeline/data property"`
