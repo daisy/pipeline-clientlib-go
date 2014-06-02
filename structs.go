@@ -82,6 +82,7 @@ type Callback struct {
 type JobRequest struct {
 	XMLName  xml.Name   `xml:"http://www.daisy.org/ns/pipeline/data jobRequest"`
 	Nicename string     `xml:"http://www.daisy.org/ns/pipeline/data nicename,omitempty"`
+	Priority string     `xml:"http://www.daisy.org/ns/pipeline/data priority,omitempty"`
 	Script   Script     `xml:"http://www.daisy.org/ns/pipeline/data script"`
 	Inputs   []Input    `xml:"http://www.daisy.org/ns/pipeline/data input,omitempty"`
 	Options  []Option   `xml:"http://www.daisy.org/ns/pipeline/data option,omitempty"`
