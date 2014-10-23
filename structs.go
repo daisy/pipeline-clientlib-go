@@ -36,6 +36,7 @@ type Script struct {
 	Nicename string   `xml:"http://www.daisy.org/ns/pipeline/data nicename,omitempty"`
 
 	Description string `xml:"http://www.daisy.org/ns/pipeline/data description,omitempty"`
+	Version     string `xml:"http://www.daisy.org/ns/pipeline/data version,omitempty"`
 
 	Homepage string   `xml:"http://www.daisy.org/ns/pipeline/data homepage,omitempty"`
 	Inputs   []Input  `xml:"http://www.daisy.org/ns/pipeline/data input,omitempty"`
