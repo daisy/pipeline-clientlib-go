@@ -16,7 +16,9 @@ const (
 	API_JOBREQUEST   = "jobRequest"
 	API_JOB          = "job"
 	API_JOBS         = "jobs"
+	API_BATCH        = "batch"
 	API_DEL_JOB      = "del_job"
+	API_DEL_BATCH    = "del_batch"
 	API_RESULT       = "results"
 	API_LOG          = "log"
 	API_HALT         = "halt"
@@ -61,6 +63,8 @@ var apiEntries = map[string]apiEntry{
 	API_MODIFYCLIENT: apiEntry{"admin/clients/%v", "PUT", 200},
 	API_PROPERTIES:   apiEntry{"admin/properties", "GET", 200},
 	API_SIZE:         apiEntry{"admin/sizes", "GET", 200},
+	API_BATCH:        apiEntry{"batch/%v", "GET", 200},
+	API_DEL_BATCH:    apiEntry{"batch/%v", "DELETE", 204},
 }
 
 //Pipeline struct stores different configuration paramenters
@@ -174,6 +178,15 @@ func (p Pipeline) Job(id string, messageSequence int) (job Job, err error) {
 	return
 }
 
+//Sends a Job query to the webservice
+func (p Pipeline) Batch(id string) (jobs Jobs, err error) {
+	req := p.newResquest(API_BATCH, &jobs, nil, id)
+	_, err = p.do(req, errorHandler(map[int]string{
+		404: "Job " + id + " not found",
+	}))
+	return
+}
+
 //Sends a request to the server in order to get all the jobs
 func (p Pipeline) Jobs() (jobs Jobs, err error) {
 	req := p.newResquest(API_JOBS, &jobs, nil)
@@ -190,6 +203,16 @@ func (p Pipeline) DeleteJob(id string) (ok bool, err error) {
 	if err == nil {
 		ok = true
 	}
+	return
+}
+
+//Deletes a batch of jobs
+func (p Pipeline) DeleteBatch(id string) (ok bool, err error) {
+	req := p.newResquest(API_DEL_BATCH, nil, nil, id)
+	_, err = p.do(req, errorHandler(map[int]string{
+		404: "Job batch " + id + " not found",
+	}))
+	ok = err == nil
 	return
 }
 

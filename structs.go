@@ -83,6 +83,7 @@ type Callback struct {
 type JobRequest struct {
 	XMLName  xml.Name   `xml:"http://www.daisy.org/ns/pipeline/data jobRequest"`
 	Nicename string     `xml:"http://www.daisy.org/ns/pipeline/data nicename,omitempty"`
+	BatchId  string     `xml:"http://www.daisy.org/ns/pipeline/data batchId,omitempty"`
 	Priority string     `xml:"http://www.daisy.org/ns/pipeline/data priority,omitempty"`
 	Script   Script     `xml:"http://www.daisy.org/ns/pipeline/data script"`
 	Inputs   []Input    `xml:"http://www.daisy.org/ns/pipeline/data input,omitempty"`
@@ -93,6 +94,7 @@ type JobRequest struct {
 type Job struct {
 	XMLName  xml.Name `xml:"http://www.daisy.org/ns/pipeline/data job"`
 	Nicename string   `xml:"http://www.daisy.org/ns/pipeline/data nicename"`
+	BatchId  string   `xml:"http://www.daisy.org/ns/pipeline/data batchId"`
 	Script   `xml:"http://www.daisy.org/ns/pipeline/data script"`
 	Messages []Message `xml:"http://www.daisy.org/ns/pipeline/data messages>message"`
 	Log      Log       `xml:"http://www.daisy.org/ns/pipeline/data log"`

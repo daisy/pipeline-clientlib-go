@@ -16,6 +16,7 @@ const (
                         <job xmlns="http://www.daisy.org/ns/pipeline/data" id="job-id-01" href="http://example.org/ws/jobs/job-id-01" status="DONE">
                                 <!-- nicename is optional -->
                                 <nicename>simple-dtbook-1</nicename>
+                                <batchId>my-batch</batchId>
                                 <script id="dtbook-to-zedai" href="http://example.org/ws/scripts/dtbook-to-zedai">
                                         <nicename>DTBook to ZedAI</nicename>
                                         <description>Transforms DTBook XML into ZedAI XML.</description>
@@ -93,6 +94,7 @@ var expected = map[string]interface{}{
 
 	API_JOB: Job{
 		Id:       "job-id-01",
+		BatchId:  "my-batch",
 		Status:   "DONE",
 		Nicename: "simple-dtbook-1",
 		Log:      Log{Href: "log"},
@@ -218,6 +220,9 @@ func TestJob(t *testing.T) {
 	if expJob.Nicename != res.Nicename {
 		t.Errorf(T_STRING, "nicename", expJob.Id, res.Id)
 	}
+	if expJob.BatchId != res.BatchId {
+		t.Errorf(T_STRING, "batchId", expJob.BatchId, res.BatchId)
+	}
 	if expJob.Log.Href != res.Log.Href {
 		t.Errorf(T_STRING, "log", expJob.Id, res.Id)
 	}
@@ -263,6 +268,24 @@ func TestJobs(t *testing.T) {
 	}
 
 }
+func TestBatch(t *testing.T) {
+	pipeline := createPipeline(xmlClientMock(jobsXml, 200))
+	res, err := pipeline.Batch("my-batch")
+	idTemp := "job-id-0%v"
+	if err != nil {
+		t.Errorf("Error not nil %v", err)
+	}
+	if len(res.Jobs) != 4 {
+		t.Errorf("Wrong jobs size", res.Jobs)
+	}
+	for idx, job := range res.Jobs {
+		jobId := fmt.Sprintf(idTemp, idx+1)
+		if jobId != job.Id {
+			t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "jobId ", jobId, job.Id)
+		}
+	}
+
+}
 
 func TestResultsNotFound(t *testing.T) {
 	pipeline := createPipeline(structClientMock(true, 404))
@@ -272,6 +295,17 @@ func TestResultsNotFound(t *testing.T) {
 	}
 }
 
+func TestDeleteBatch(t *testing.T) {
+	pipeline := createPipeline(structClientMock(true, 204))
+	ok, err := pipeline.DeleteBatch("my-batch")
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	if !ok {
+		t.Errorf("Job was not deleted")
+	}
+
+}
 func TestDeleteJob(t *testing.T) {
 	pipeline := createPipeline(structClientMock(true, 204))
 	ok, err := pipeline.DeleteJob("job1")
