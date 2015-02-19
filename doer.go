@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"net/url"
 	"strings"
@@ -122,6 +123,7 @@ func (p Pipeline) newResquest(apiEntry string, targetPtr interface{}, postData i
 //Executes the request against the client
 func (p Pipeline) do(req *restclient.RequestResponse, handler func(int, restclient.RequestResponse) error) (status int, err error) {
 	p.authenticator(req)
+	log.Printf("Request %v", req)
 	status, err = p.clientMaker().Do(req)
 	if err != nil {
 		if err == restclient.UnexpectedStatus {

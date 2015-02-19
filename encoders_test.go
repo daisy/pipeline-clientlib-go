@@ -120,90 +120,29 @@ func TestMultipartEncoding(t *testing.T) {
 	}
 }
 
-//func TestGetFieldsMimeTypesErrors(t *testing.T) {
-////not a struct
-//_, err := getFieldsMimeTypes("hola")
-//if err == nil {
-//t.Errorf("Expected error not thrown")
-//}
-//var st interface{} = nil
-//_, err = getFieldsMimeTypes(st)
-//if err == nil {
-//t.Errorf("Expected error not thrown")
-//}
-//}
+func TestWriterDecoder(t *testing.T) {
+	msg := "heyhey"
+	in := bytes.NewBufferString(msg)
+	out := bytes.NewBuffer([]byte{})
 
-//type TestMP1 struct {
-//part1 interface{} `mimetype:"xml" name:"part1"`
-//part2 interface{} `mimetype:"json" name:"part2"`
-//}
+	decoder := NewWriterDecoder(in)
+	err := decoder.Decode(out)
+	if err != nil {
+		t.Errorf("Unexpected error %v", err)
+	}
+	res := out.String()
+	if msg != res {
+		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "msg", msg, res)
+	}
 
-//func TestGetFieldsMimeTypes(t *testing.T) {
-//partType1 := "xml"
-//partType2 := "json"
-//partName1 := "part1"
-//partName2 := "part2"
-//mp := TestMP1{part1: "hola", part2: "hey"}
-////not a struct
-//mtypes, err := getFieldsMimeTypes(mp)
-//if err != nil {
-//t.Errorf("Unexpected error %v", err)
-//}
-//if len(mtypes) != 2 {
-//t.Errorf("Unexpected map lenght %v", len(mtypes))
-//}
-//resType, ok := mtypes[partName1]
+}
+func TestWriterDecoderErr(t *testing.T) {
+	msg := "heyhey"
+	buf := bytes.NewBufferString(msg)
+	decoder := NewWriterDecoder(buf)
+	err := decoder.Decode("hola")
+	if err == nil {
+		t.Error("Expected error not thrown")
+	}
 
-//if !ok {
-//t.Errorf("part1 was not stored")
-//}
-
-//if partType1 != resType {
-//t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "partType ", partType1, resType)
-//}
-
-//resType, ok = mtypes[partName2]
-
-//if !ok {
-//t.Errorf("part2 was not stored")
-//}
-
-//if partType2 != resType {
-//t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "partType ", partType2, resType)
-//}
-//}
-
-//func TestGetFieldsMimeTypesPoiter(t *testing.T) {
-//partType1 := "xml"
-//partType2 := "json"
-//partName1 := "part1"
-//partName2 := "part2"
-//mp := TestMP1{part1: "hola", part2: "hey"}
-////not a struct
-//mtypes, err := getFieldsMimeTypes(&mp)
-//if err != nil {
-//t.Errorf("Unexpected error %v", err)
-//}
-//if len(mtypes) != 2 {
-//t.Errorf("Unexpected map lenght %v", len(mtypes))
-//}
-//resType, ok := mtypes[partName1]
-
-//if !ok {
-//t.Errorf("part1 was not stored")
-//}
-
-//if partType1 != resType {
-//t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "partType ", partType1, resType)
-//}
-
-//resType, ok = mtypes[partName2]
-
-//if !ok {
-//t.Errorf("part1 was not stored")
-//}
-
-//if partType2 != resType {
-//t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "partType ", partType2, resType)
-//}
-//}
+}

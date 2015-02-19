@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 	"testing"
@@ -240,11 +241,13 @@ func TestJob(t *testing.T) {
 func TestResults(t *testing.T) {
 	msg := "learn to swim"
 	pipeline := createPipeline(xmlClientMock(msg, 200))
-	data, err := pipeline.Results("id")
+	buf := bytes.NewBuffer([]byte{})
+	err := pipeline.Results("id", buf)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
-	res := string(data)
+	//fmt.Printf("buf %+v\n", buf)
+	res := buf.String()
 	if msg != res {
 		t.Errorf("Wrong %v\n\tExpected: %v\n\tResult: %v", "msg ", msg, res)
 	}
@@ -289,7 +292,7 @@ func TestBatch(t *testing.T) {
 
 func TestResultsNotFound(t *testing.T) {
 	pipeline := createPipeline(structClientMock(true, 404))
-	_, err := pipeline.Results("non existing")
+	err := pipeline.Results("non existing", bytes.NewBuffer([]byte{}))
 	if err == nil {
 		t.Errorf("Expected error not thrown")
 	}

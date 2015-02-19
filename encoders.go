@@ -3,11 +3,12 @@ package pipeline
 import (
 	"encoding/xml"
 	"errors"
-	"github.com/capitancambio/restclient"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"net/textproto"
+
+	"github.com/capitancambio/restclient"
 )
 
 type MultipartData struct {
@@ -149,80 +150,26 @@ func NewRawDataEncoder(w io.Writer) restclient.Encoder {
 	return RawDataEncoder{w}
 }
 
-//TODO: the following could be a hell of a library if finished
-//const (
-//XML  = "application/xml"
-//DATA = "pplication/octet-stream"
-//)
+//Just propagate reader writer
+type WriterDecoder struct {
+	r io.Reader
+}
 
-//type EncoderSupplier func(io.Writer) restclient.Encoder
+//Builds a WriterDecoder
+func NewWriterDecoder(r io.Reader) restclient.Decoder {
+	return WriterDecoder{r: r}
 
-////registered suppliers
-//var suppliers map[string]EncoderSupplier = map[string]EncoderSupplier{
-//XML:  func(w io.Writer) restclient.Encoder { return xml.NewEncoder(w) },
-//DATA: NewRawDataEncoder,
-//}
+}
 
-////type might change to sth more appropriate
-////func Register(mimetype string, s EncoderSupplier) {
-////suppliers[mimetype] = s
-////}
+//Decodes the data into a raw data struct
+func (d WriterDecoder) Decode(v interface{}) error {
 
-////Multipart encoder encodes multypart messages
-//type MultipartEncoder struct {
-//w io.Writer
-//}
-
-//func (me MultipartEncoder) Encode(v interface{}) error {
-////get the fields
-//_, err := getFieldsMimeTypes(v)
-//if err != nil {
-//return err
-//}
-////get the encoder for each field
-
-////write
-//return nil
-//}
-
-//type multipartEntry struct {
-//name     string
-//mimetype string
-//}
-
-//type MPartEncoderError struct {
-//Type reflect.Type
-//}
-
-//func (e MPartEncoderError) Error() string {
-//return "multipart: could not encode type " + e.Type.String()
-//}
-
-//func getFieldsMimeTypes(i interface{}) (fields map[reflect.StructField]multipartEntry, err error) {
-//t := reflect.TypeOf(i)
-//if t == nil {
-//return fields, MPartEncoderError{t}
-//}
-////check that t is a pointer and it's accessible
-//if t.Kind() == reflect.Ptr {
-////get the referenced type
-//t = reflect.Indirect(reflect.ValueOf(i)).Type()
-//}
-//if t.Kind() != reflect.Struct {
-//return fields, MPartEncoderError{t}
-//}
-//fields = make(map[reflect.StructField]multipartEntry)
-////get the fields
-//for i := 0; i < t.NumField(); i++ {
-//if tag := t.Field(i).Tag; tag != "" {
-//mimetype := tag.Get("mimetype")
-//name := tag.Get("name")
-//if name == "" && mimetype == "" {
-//break
-//} else if name != "" && mimetype != "" {
-//fields[t.Field(i)] = multipartEntry{name, mimetype}
-//}
-//}
-//}
-//return
-//}
+	switch v.(type) {
+	case io.Writer:
+		_, err := io.Copy(v.(io.Writer), d.r)
+		return err
+	default:
+		return errors.New("Writer decoder only admits io.Writer interface")
+	}
+	return nil
+}

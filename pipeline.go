@@ -216,8 +216,30 @@ func (p Pipeline) DeleteBatch(id string) (ok bool, err error) {
 	return
 }
 
-//Overrides the xml decoder to get raw data
+//Overrides the xml decoder to get the writer
 func resultClientMaker(p Pipeline) func() doer {
+	return func() doer {
+		cli := p.clientMaker()
+		cli.SetDecoderSupplier(func(r io.Reader) restclient.Decoder {
+			return NewWriterDecoder(r)
+		})
+		return cli
+	}
+}
+
+//Returns the results of the job as an array of bytes
+func (p Pipeline) Results(id string, w io.Writer) (err error) {
+	//override the client maker
+	p.clientMaker = resultClientMaker(p)
+	req := p.newResquest(API_RESULT, w, nil, id)
+	_, err = p.do(req, errorHandler(map[int]string{
+		404: "Job " + id + " not found",
+	}))
+	return err
+}
+
+//Overrides the xml decoder to get raw data
+func rawClientMaker(p Pipeline) func() doer {
 	return func() doer {
 		cli := p.clientMaker()
 		cli.SetDecoderSupplier(func(r io.Reader) restclient.Decoder {
@@ -227,24 +249,9 @@ func resultClientMaker(p Pipeline) func() doer {
 	}
 }
 
-//Returns the results of the job as an array of bytes
-func (p Pipeline) Results(id string) (data []byte, err error) {
-	//override the client maker
-	p.clientMaker = resultClientMaker(p)
-	rd := &RawData{Data: new([]byte)}
-	req := p.newResquest(API_RESULT, rd, nil, id)
-	_, err = p.do(req, errorHandler(map[int]string{
-		404: "Job " + id + " not found",
-	}))
-	if err != nil {
-		return nil, err
-	}
-	return *(rd.Data), nil
-}
-
 //Gets the log file for a job
 func (p Pipeline) Log(id string) (data []byte, err error) {
-	p.clientMaker = resultClientMaker(p)
+	p.clientMaker = rawClientMaker(p)
 	rd := &RawData{Data: new([]byte)}
 	req := p.newResquest(API_LOG, rd, nil, id)
 	_, err = p.do(req, errorHandler(map[int]string{
