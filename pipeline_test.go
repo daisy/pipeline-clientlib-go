@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"reflect"
+	"encoding/xml"
 )
 
 const (
@@ -22,8 +24,8 @@ const (
                                         <nicename>DTBook to ZedAI</nicename>
                                         <description>Transforms DTBook XML into ZedAI XML.</description>
                                 </script>
-                                <messages>
-                                        <message level="WARNING" sequence="22">Warning about this job</message>
+                                <messages progress=".5">
+                                        <message level="WARNING" sequence="22" content="Warning about this job"/>
                                 </messages>
                                 <log href="log"/>
                                 <results href="http://example.org/ws/jobs/job-id-01/result" mime-type="zip">
@@ -99,6 +101,18 @@ var expected = map[string]interface{}{
 		Status:   "DONE",
 		Nicename: "simple-dtbook-1",
 		Log:      Log{Href: "log"},
+		Messages: Messages{
+			XMLName: xml.Name{Space: "http://www.daisy.org/ns/pipeline/data", Local: "messages",},
+			Progress: .5,
+			Message: []Message{
+				Message{
+					XMLName: xml.Name{Space: "http://www.daisy.org/ns/pipeline/data", Local: "message",},
+					Level:    "WARNING",
+					Sequence: 22,
+					Content:  "Warning about this job",
+				},
+			},
+		},
 	},
 }
 
@@ -235,6 +249,9 @@ func TestJob(t *testing.T) {
 	}
 	if len(res.Results.Result[1].Result) != 2 {
 		t.Errorf(T_STRING, "results len", 2, len(res.Results.Result[1].Result))
+	}
+	if ! reflect.DeepEqual(expJob.Messages, res.Messages) {
+		t.Errorf("Wrong messages\nexpected: %+v\nresult:%+v\n", expJob.Messages, res.Messages)
 	}
 }
 
