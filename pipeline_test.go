@@ -259,7 +259,7 @@ func TestResults(t *testing.T) {
 	msg := "learn to swim"
 	pipeline := createPipeline(xmlClientMock(msg, 200))
 	buf := bytes.NewBuffer([]byte{})
-	err := pipeline.Results("id", buf)
+	ok, err := pipeline.Results("id", buf)
 	if err != nil {
 		t.Errorf("Unexpected error %v", err)
 	}
