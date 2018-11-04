@@ -56,6 +56,7 @@ type Option struct {
 	Type       string   `xml:"type,attr,omitempty"`
 	ShortDesc  string   `xml:"-"`
 	LongDesc   string   `xml:"desc,attr,omitempty"`
+	Default    string   `xml:"default,attr,omitempty"`
 	OutputType string   `xml:"optionType,attr,omitempty"`
 	Separator  string   `xml:"separator,attr,omitempty"`
 	Value      string   `xml:",chardata"`
