@@ -50,10 +50,12 @@ type Option struct {
 	Required   bool     `xml:"required,attr,omitempty"`
 	Sequence   bool     `xml:"sequence,attr,omitempty"`
 	Name       string   `xml:"name,attr,omitempty"`
+	NiceName   string   `xml:"nicename,attr,omitempty"`
 	Ordered    bool     `xml:"ordered,attr,omitempty"`
 	Mediatype  string   `xml:"mediaType,attr,omitempty"`
-	Desc       string   `xml:"desc,attr,omitempty"`
 	Type       string   `xml:"type,attr,omitempty"`
+	ShortDesc  string   `xml:"-"`
+	LongDesc   string   `xml:"desc,attr,omitempty"`
 	OutputType string   `xml:"optionType,attr,omitempty"`
 	Separator  string   `xml:"separator,attr,omitempty"`
 	Value      string   `xml:",chardata"`
@@ -61,9 +63,11 @@ type Option struct {
 }
 type Input struct {
 	XMLName   xml.Name `xml:"http://www.daisy.org/ns/pipeline/data input"`
-	Desc      string   `xml:"desc,attr,omitempty"`
+	ShortDesc string   `xml:"-"`
+	LongDesc  string   `xml:"desc,attr,omitempty"`
 	Mediatype string   `xml:"mediaType,attr,omitempty"`
-	Name      string   `xml:"name,attr"`
+	Name      string   `xml:"name,attr,omitempty"`
+	NiceName  string   `xml:"nicename,attr"`
 	Sequence  bool     `xml:"sequence,attr,omitempty"`
 	Items     []Item
 }

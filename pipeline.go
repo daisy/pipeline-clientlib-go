@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"math"
+	"strings"
 
 	"github.com/capitancambio/restclient"
 )
@@ -106,19 +107,56 @@ func (p Pipeline) Alive() (alive Alive, err error) {
 	return
 }
 
-//List of scripts
-
 //Returns the list of available scripts
 func (p Pipeline) Scripts() (scripts Scripts, err error) {
 	req := p.newResquest(API_SCRIPTS, &scripts, nil)
 	_, err = p.do(req, defaultErrorHandler())
+	if err != nil {
+		return
+	}
+	for _, script := range scripts.Scripts {
+		err = processInputsAndOptions(p, &script)
+		if err != nil {
+			return
+		}
+	}
 	return
 }
 
-//Returns the list of available scripts
+//Returns the script for a given script id
 func (p Pipeline) Script(id string) (script Script, err error) {
 	req := p.newResquest(API_SCRIPT, &script, nil, id)
 	_, err = p.do(req, errorHandler(map[int]string{404: "Script " + id + " not found"}))
+	if err != nil {
+		return
+	}
+	err = processInputsAndOptions(p, &script)
+	return
+}
+
+func processInputsAndOptions(p Pipeline, script *Script) (err error) {
+	for i, input := range script.Inputs {
+		desc := strings.Split(input.LongDesc, "\n")
+		script.Inputs[i].ShortDesc = desc[0]
+		// insert empty line after first line
+		if len(desc) > 1 {
+			if desc[1] != "" {
+				desc = append(desc[:1], append([]string{""}, desc[1:]...)...)
+			}
+			script.Inputs[i].LongDesc = strings.Join(desc, "\n")
+		}
+	}
+	for i, option := range script.Options {
+		desc := strings.Split(option.LongDesc, "\n")
+		script.Options[i].ShortDesc = desc[0]
+		// insert empty line after first line
+		if len(desc) > 1 {
+			if desc[1] != "" {
+				desc = append(desc[:1], append([]string{""}, desc[1:]...)...)
+			}
+			script.Options[i].LongDesc = strings.Join(desc, "\n")
+		}
+	}
 	return
 }
 
