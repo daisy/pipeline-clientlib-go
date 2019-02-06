@@ -120,7 +120,7 @@ type Input struct {
 	LongDesc  string   `xml:"desc,attr,omitempty"`
 	Mediatype string   `xml:"mediaType,attr,omitempty"`
 	Name      string   `xml:"name,attr,omitempty"`
-	NiceName  string   `xml:"nicename,attr"`
+	NiceName  string   `xml:"nicename,attr,omitempty"`
 	Sequence  bool     `xml:"sequence,attr,omitempty"`
 	Items     []Item
 }
